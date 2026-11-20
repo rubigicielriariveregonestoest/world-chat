@@ -1,0 +1,35 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Runtime Dynamic Data (Chat storage)
+server/data/messages.json
+!server/data/.gitkeep
+
+# Runtime User Uploads
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Scratch / IDE
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>World Chat — Global Live Chat</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2228%22>🌍</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="celestial-theme">
+  <!-- Fullscreen Celestial Canvas (Twinkling Stars, Meteors, Shooting Stars) -->
+  <canvas id="celestial-canvas" class="celestial-canvas"></canvas>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Main App Shell -->
+  <div class="chat-app">
+    <!-- Top Header as Floating Mini-Bubbles -->
+    <header class="app-header">
+      <div class="header-left">
+        <!-- Mini-Bubble 1: Brand & Globe -->
+        <div class="glass-pill brand-pill">
+          <div class="globe-container header-globe" title="World Chat — Global Live Room">
+            <div class="globe-tilt">
+              <div class="globe-sphere">
+                <div class="globe-map"></div>
+                <div class="globe-umbra"></div>
+                <div class="globe-sun-reflection"></div>
+                <div class="globe-atmosphere"></div>
+              </div>
+            </div>
+          </div>
+          <span class="brand-title">World Chat</span>
+        </div>
+
+        <!-- Mini-Bubble 2: Online Presence -->
+        <div class="glass-pill presence-pill">
+          <span class="pulsing-dot"></span>
+          <span id="online-count">Connecting...</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Profile Dropdown Component -->
+        <div class="profile-dropdown-wrapper" id="profile-dropdown-wrapper">
+          <button id="profile-btn" class="glass-pill profile-pill" title="Profile & Settings" aria-expanded="false" aria-haspopup="true">
+            <div id="user-avatar" class="user-avatar">?</div>
+            <span id="user-display-name" class="user-name">Guest</span>
+            <span class="dropdown-chevron">▾</span>
+          </button>
+
+          <!-- Floating Profile Dropdown Menu -->
+          <div id="profile-dropdown-menu" class="profile-dropdown-menu hidden">
+            <!-- Profile Identity Card & Edit Button -->
+            <div class="dropdown-user-header">
+              <div class="dropdown-avatar-wrap">
+                <div id="dropdown-user-avatar" class="user-avatar">?</div>
+              </div>
+              <div class="dropdown-user-info">
+                <span id="dropdown-user-name" class="dropdown-username">Guest</span>
+                <span class="dropdown-user-role">Anonymous Guest</span>
+              </div>
+              <button type="button" id="edit-profile-btn" class="dropdown-edit-btn" title="Edit nickname & color">✏️ Edit</button>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- Settings & Toggles -->
+            <div class="dropdown-menu-list">
+              <!-- Safe Mode Toggle -->
+              <button type="button" id="toggle-blur-btn" class="dropdown-item-btn" title="Toggle Blur on Photos (Safe for Work)">
+                <span class="dropdown-item-icon">👁️</span>
+                <span class="dropdown-item-label">Safe Mode</span>
+                <span class="dropdown-item-badge" id="safe-mode-badge">Off</span>
+              </button>
+
+              <!-- Sound Alerts Toggle -->
+              <button type="button" id="toggle-sound-btn" class="dropdown-item-btn" title="Toggle Sound Notifications">
+                <span class="dropdown-item-icon" id="sound-icon">🔊</span>
+                <span class="dropdown-item-label">Sound Alerts</span>
+                <span class="dropdown-item-badge" id="sound-badge">On</span>
+              </button>
+
+              <!-- Theme Toggle -->
+              <button type="button" id="theme-btn" class="dropdown-item-btn" title="Switch Theme (Neomorphism Dark / Light)">
+                <span class="dropdown-item-icon" id="theme-icon">🌙</span>
+                <span class="dropdown-item-label">Theme</span>
+                <span class="dropdown-item-badge" id="theme-badge">Dark</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Chat Messages Viewport -->
+    <main id="chat-viewport" class="chat-viewport">
+      <!-- Welcome Banner -->
+      <div class="world-banner">
+        <div class="globe-container banner-globe">
+          <div class="globe-tilt">
+            <div class="globe-sphere">
+              <div class="globe-map"></div>
+              <div class="globe-umbra"></div>
+              <div class="globe-sun-reflection"></div>
+              <div class="globe-atmosphere"></div>
+            </div>
+          </div>
+        </div>
+        <h2>Welcome to World Chat</h2>
+        <p>You are talking with everyone online in the world right now. No accounts, instant guest access, and real-time photo sharing.</p>
+        <div class="banner-rules">
+          <span>📏 Max 350 chars/msg</span>
+          <span>📸 Photos up to 5MB</span>
+          <span>⚡ Slowmode active</span>
+        </div>
+      </div>
+
+      <!-- Live Messages Stream -->
+      <div id="messages-list" class="messages-list"></div>
+
+      <!-- Typing Indicator -->
+      <div id="typing-indicator" class="typing-indicator hidden">
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <span id="typing-text">Someone is typing...</span>
+      </div>
+
+      <!-- Jump to Bottom Button -->
+      <button id="scroll-bottom-btn" class="scroll-bottom-btn hidden">
+        <span>↓ New messages</span>
+      </button>
+    </main>
+
+    <!-- Reply Preview Bar (Shown when replying to a message) -->
+    <div id="reply-preview-bar" class="reply-preview-bar hidden">
+      <div class="reply-preview-card">
+        <div class="reply-bar-accent" id="reply-bar-accent"></div>
+        <div class="reply-bar-content">
+          <div class="reply-bar-header">
+            <span class="reply-icon">↩</span>
+            <span class="reply-bar-target" id="reply-bar-target">Replying to Guest</span>
+          </div>
+          <div class="reply-bar-snippet" id="reply-bar-snippet">Original message preview...</div>
+        </div>
+        <button type="button" id="cancel-reply-btn" class="cancel-reply-btn" title="Cancel reply">✕</button>
+      </div>
+    </div>
+
+    <!-- Image Attachment Preview Bar (Shown when an image is selected) -->
+    <div id="attachment-preview-bar" class="attachment-preview-bar hidden">
+      <div class="preview-card">
+        <img id="preview-image" src="" alt="Selected photo">
+        <div class="preview-info">
+          <span id="preview-filename" class="preview-name">photo.jpg</span>
+          <span id="preview-filesize" class="preview-size">1.2 MB</span>
+        </div>
+        <button id="cancel-attachment-btn" class="cancel-btn" title="Remove photo">✕</button>
+      </div>
+    </div>
+
+    <!-- Bottom Detached Floating Input Area -->
+    <footer class="app-footer">
+      <form id="chat-form" class="chat-form">
+        <!-- Hidden File Input -->
+        <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
+
+        <!-- Detached Plus Button & Popover -->
+        <div class="plus-wrapper">
+          <button type="button" id="plus-btn" class="floating-circle-btn plus-btn" title="Add Attachment">
+            +
+          </button>
+          <!-- Floating Action Popup Bubble -->
+          <div id="actions-popup" class="actions-popup hidden">
+            <button type="button" id="attach-btn" class="popup-item-btn" title="Send a Photo (up to 5MB)">
+              <span class="popup-icon">📷</span>
+              <span class="popup-label">Photo</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Attached Floating Cloud Input Bubble with Left Swipe-Send Button -->
+        <div class="chat-input-bubble" id="chat-input-bubble">
+          <!-- Attached Left Swipe-to-Send Button -->
+          <button type="button" id="send-btn" class="attached-send-btn send-btn" title="Swipe right to send">
+            <span class="send-btn-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </span>
+            <span class="send-btn-label">Swipe ➔</span>
+          </button>
+
+          <input 
+            type="text" 
+            id="message-input" 
+            class="message-input" 
+            placeholder="Say something to the world..." 
+            autocomplete="off" 
+            maxlength="350"
+          />
+          <!-- Dynamic Character Counter -->
+          <div id="char-counter" class="char-counter">0 / 350</div>
+        </div>
+      </form>
+    </footer>
+  </div>
+
+  <!-- Swipe Notice Educational Modal -->
+  <div id="swipe-notice-modal" class="modal-overlay hidden">
+    <div class="modal-card swipe-modal-box">
+      <div class="modal-header">
+        <h3>👉 How to Send</h3>
+        <button id="close-swipe-notice" class="close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="swipe-demo-graphic">
+          <div class="demo-track">
+            <div class="demo-thumb">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </div>
+            <div class="demo-arrow-trail">Swipe Right ➔ ➔ ➔</div>
+          </div>
+        </div>
+        <p class="swipe-modal-desc">
+          To broadcast your message, <strong>swipe the send button from the left side all the way to the right</strong>!
+        </p>
+        <label class="remember-label">
+          <input type="checkbox" id="dismiss-swipe-notice-cb">
+          <span>Do not remind me again</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button id="confirm-swipe-notice-btn" class="primary-btn">Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Customization Modal -->
+  <div id="profile-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Customize Profile</h3>
+        <button id="close-profile-modal" class="close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <label for="custom-name-input">Display Name</label>
+        <input type="text" id="custom-name-input" maxlength="24" placeholder="Enter your nickname...">
+        <span class="input-hint">Max 24 characters. Stored in your browser.</span>
+
+        <label style="margin-top: 16px;">Avatar Accent Color</label>
+        <div id="color-palette" class="color-palette"></div>
+
+        <div class="preview-section">
+          <label>Chat Preview</label>
+          <div class="preview-message-box">
+            <div id="modal-preview-avatar" class="user-avatar">?</div>
+            <div>
+              <div class="preview-header">
+                <span id="modal-preview-name" class="user-name">Guest</span>
+                <span class="msg-time">Just now</span>
+              </div>
+              <div class="preview-text">Hello World! This is how your chat appears.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-profile-btn" class="primary-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Image Lightbox Modal -->
+  <div id="lightbox-modal" class="lightbox-overlay hidden">
+    <div class="lightbox-toolbar">
+      <a id="lightbox-download" href="#" download="world-chat-photo.jpg" class="lightbox-btn" title="Download Image">⬇ Download</a>
+      <button id="close-lightbox" class="lightbox-btn" title="Close Lightbox">✕ Close</button>
+    </div>
+    <div class="lightbox-content">
+      <img id="lightbox-img" src="" alt="Full view">
+    </div>
+  </div>
+
+  <!-- Load Socket.IO Client from Server -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Celestial Universe Engine (Shooting Stars & Meteor Showers) -->
+  <script src="celestial.js"></script>
+  <!-- Main Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
