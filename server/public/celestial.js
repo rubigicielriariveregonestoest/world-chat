@@ -220,9 +220,14 @@
     }));
 
     // Cascade meteors over the 4-second duration
-    const intervalId = setInterval(() => {
-      if (Date.now() - startTime >= duration) {
-        clearInterval(intervalId);
+    if (activeShowerInterval) {
+      clearInterval(activeShowerInterval);
+      activeShowerInterval = null;
+    }
+    activeShowerInterval = setInterval(() => {
+      if (Date.now() - startTime >= duration || isIdle || !isRunning) {
+        clearInterval(activeShowerInterval);
+        activeShowerInterval = null;
         return;
       }
       meteors.push(new Meteor({
@@ -237,8 +242,24 @@
     }, 200);
   }
 
-  // Event Scheduler
+  // --- Celestial Spawner & Scheduler ---
+  let isRunning = true;
+  let animFrameId = null;
+  let celestialTimerId = null;
+  let activeShowerInterval = null;
+
+  function scheduleCelestialEvent(delay) {
+    if (celestialTimerId) {
+      clearTimeout(celestialTimerId);
+      celestialTimerId = null;
+    }
+    if (isIdle || !isRunning) return;
+    const nextInterval = delay !== undefined ? delay : (Math.random() * 3000 + 3500);
+    celestialTimerId = setTimeout(triggerCelestialEvent, nextInterval);
+  }
+
   function triggerCelestialEvent() {
+    if (isIdle || !isRunning) return;
     // 70% Single Falling Star, 30% Meteor Shower (lasting 4 seconds)
     const roll = Math.random();
     if (roll < 0.70) {
@@ -247,18 +268,85 @@
       spawnMeteorShower();
     }
 
-    // Schedule next celestial occurrence between 3.5s and 6.5s
-    const nextInterval = Math.random() * 3000 + 3500;
-    setTimeout(triggerCelestialEvent, nextInterval);
+    scheduleCelestialEvent();
   }
 
-  // Initial spawns so user sees them right away
-  setTimeout(spawnShootingStar, 600);
-  setTimeout(triggerCelestialEvent, 3500);
+  // --- Idle / Inactivity Detection Engine ---
+  const IDLE_TIMEOUT_MS = 25000; // 25 seconds of silence
+  let isIdle = false;
+  let isIdleHalted = false;
+  let idleTimer = null;
+  let lastActivityTime = Date.now();
 
-  // --- Main Animation Loop (60 FPS) ---
-  let isRunning = true;
+  function onUserActivity() {
+    const now = Date.now();
+    // Throttle checks to avoid overhead on rapid mouse moves
+    if (now - lastActivityTime < 250 && !isIdle && !isIdleHalted) {
+      return;
+    }
+    lastActivityTime = now;
 
+    if (isIdle || isIdleHalted) {
+      wakeUp();
+    }
+
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(enterIdle, IDLE_TIMEOUT_MS);
+  }
+
+  function enterIdle() {
+    isIdle = true;
+    if (celestialTimerId) {
+      clearTimeout(celestialTimerId);
+      celestialTimerId = null;
+    }
+    if (activeShowerInterval) {
+      clearInterval(activeShowerInterval);
+      activeShowerInterval = null;
+    }
+    // If no meteors are currently rendering, halt loop immediately
+    if (meteors.length === 0) {
+      isIdleHalted = true;
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+    }
+  }
+
+  function wakeUp() {
+    isIdle = false;
+    isIdleHalted = false;
+    if (isRunning && !animFrameId) {
+      animFrameId = requestAnimationFrame(render);
+      // Delightful wake-up shooting star
+      spawnShootingStar();
+      scheduleCelestialEvent(2000);
+    }
+  }
+
+  // Listen to user interaction signals
+  const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'pointerdown', 'scroll', 'wheel'];
+  activityEvents.forEach(evt => {
+    window.addEventListener(evt, onUserActivity, { passive: true });
+  });
+
+  // Expose engine controls for testing and external hooks
+  window.celestialEngine = {
+    isIdle: () => isIdle,
+    isHalted: () => isIdleHalted,
+    wakeUp,
+    enterIdle
+  };
+
+  // Start idle timer initially
+  idleTimer = setTimeout(enterIdle, IDLE_TIMEOUT_MS);
+
+  // Initial spawns
+  setTimeout(() => { if (!isIdle && isRunning) spawnShootingStar(); }, 600);
+  scheduleCelestialEvent(3500);
+
+  // --- Main Animation Loop (60 FPS when active, 0 FPS when idle) ---
   function render() {
     if (!isRunning) return;
 
@@ -289,16 +377,39 @@
       }
     }
 
-    requestAnimationFrame(render);
+    // 3. If idle and all existing meteors have completed, halt the animation loop!
+    if (isIdle && meteors.length === 0) {
+      isIdleHalted = true;
+      animFrameId = null;
+      return; // 0 FPS, 0% CPU/GPU overhead while idle
+    }
+
+    animFrameId = requestAnimationFrame(render);
   }
 
   // --- Visibility & Lifecycle Management ---
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       isRunning = false;
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      if (celestialTimerId) {
+        clearTimeout(celestialTimerId);
+        celestialTimerId = null;
+      }
+      if (activeShowerInterval) {
+        clearInterval(activeShowerInterval);
+        activeShowerInterval = null;
+      }
     } else {
       isRunning = true;
-      requestAnimationFrame(render);
+      onUserActivity();
+      if (!isIdleHalted && !animFrameId) {
+        animFrameId = requestAnimationFrame(render);
+        scheduleCelestialEvent(2500);
+      }
     }
   });
 
@@ -306,5 +417,5 @@
 
   // Initialize
   resize();
-  requestAnimationFrame(render);
+  animFrameId = requestAnimationFrame(render);
 })();
