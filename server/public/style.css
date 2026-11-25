@@ -10,8 +10,8 @@
   --text-main: #f5f5f5;
   --text-muted: #9e9a95;
   --border-color: transparent;         /* Borderless Molded Neomorphism */
-  --accent-cyan: #38bdf8;              /* Electric Cerulean (Night Sky counterpart to Light theme #0284c7) */
-  --accent-starlight: #93c5fd;
+  --accent-cyan: #f59e0b;              /* Warm Honey Amber (Harmonized with Warm Espresso & Sand) */
+  --accent-starlight: #fbbf24;         /* Soft Honey Starlight */
   --accent-purple: #c084fc;
   --accent-green: #34d399;
   --accent-red: #f87171;
@@ -274,15 +274,15 @@ body {
 
 .brand-icon {
   font-size: 28px;
-  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.4));
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.45));
 }
 
 .brand-title {
   font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: -0.01em;
-  color: #f0f9ff;
-  text-shadow: 0 0 12px rgba(56, 189, 248, 0.75), 0 1px 2px rgba(0, 0, 0, 0.9);
+  color: #fffaf0;
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.65), 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .presence-badge {
@@ -335,7 +335,7 @@ body {
 }
 
 .icon-btn.active {
-  background: rgba(56, 189, 248, 0.15);
+  background: rgba(245, 158, 11, 0.15);
   border-color: var(--accent-cyan);
   color: var(--accent-cyan);
 }
@@ -925,12 +925,12 @@ body {
 /* Jump to original message luminous pulse highlight */
 @keyframes replyPulseHighlight {
   0% {
-    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.75), 7px 7px 16px rgba(15, 14, 13, 0.80);
-    border-color: rgba(56, 189, 248, 0.9);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.75), 7px 7px 16px rgba(15, 14, 13, 0.80);
+    border-color: rgba(245, 158, 11, 0.9);
   }
   35% {
-    box-shadow: 0 0 22px 6px rgba(56, 189, 248, 0.65), 7px 7px 16px rgba(15, 14, 13, 0.80);
-    border-color: #38bdf8;
+    box-shadow: 0 0 22px 6px rgba(245, 158, 11, 0.65), 7px 7px 16px rgba(15, 14, 13, 0.80);
+    border-color: #f59e0b;
   }
   100% {
     box-shadow: 7px 7px 16px rgba(15, 14, 13, 0.80), -5px -5px 13px rgba(255, 250, 242, 0.08);
@@ -1362,7 +1362,7 @@ body {
 }
 
 .popup-item-btn:hover {
-  background: rgba(56, 189, 248, 0.15);
+  background: rgba(245, 158, 11, 0.15);
   color: var(--accent-cyan);
 }
 
@@ -1390,8 +1390,8 @@ body {
 .chat-input-bubble:focus-within {
   box-shadow: 
     inset 4px 4px 10px rgba(15, 14, 13, 0.90), 
-    inset -3px -3px 8px rgba(56, 189, 248, 0.15),
-    0 0 0 1px rgba(56, 189, 248, 0.25);
+    inset -3px -3px 8px rgba(245, 158, 11, 0.18), 
+    0 0 0 1px rgba(245, 158, 11, 0.28);
 }
 
 .chat-input-bubble .message-input {
@@ -1450,14 +1450,14 @@ body {
   transition: width 0.2s ease, border-radius 0.2s ease !important;
   box-shadow: 
     6px 6px 16px rgba(15, 14, 13, 0.88), 
-    -4px -4px 12px rgba(56, 189, 248, 0.22);
+    -4px -4px 12px rgba(245, 158, 11, 0.25);
 }
 
 .attached-send-btn.swipe-hint {
   background: #383533;
   box-shadow: 
     5px 5px 14px rgba(15, 14, 13, 0.85), 
-    -4px -4px 12px rgba(56, 189, 248, 0.2);
+    -4px -4px 12px rgba(245, 158, 11, 0.22);
 }
 
 .attached-send-btn .send-btn-icon {
@@ -1621,7 +1621,7 @@ body {
 
 .modal-body input[type="text"]:focus {
   outline: none;
-  box-shadow: inset 3px 3px 6px rgba(15, 14, 13, 0.90), inset -2px -2px 5px rgba(56, 189, 248, 0.15), 0 0 0 1px rgba(56, 189, 248, 0.25);
+  box-shadow: inset 3px 3px 6px rgba(15, 14, 13, 0.90), inset -2px -2px 5px rgba(245, 158, 11, 0.15), 0 0 0 1px rgba(245, 158, 11, 0.25);
 }
 
 .input-hint {
@@ -1695,7 +1695,7 @@ body {
   background: var(--accent-cyan);
   border: none;
   border-radius: 10px;
-  color: #0b0f19;
+  color: #1a1202;
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
@@ -1704,7 +1704,7 @@ body {
 }
 
 .primary-btn:hover {
-  background: #7dd3fc;
+  background: #fbbf24;
   box-shadow: 5px 5px 14px rgba(15, 14, 13, 0.80), -4px -4px 10px rgba(255, 250, 242, 0.20);
   transform: translateY(-1px);
 }

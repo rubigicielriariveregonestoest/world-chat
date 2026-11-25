@@ -487,7 +487,7 @@
 
   // --- Palettes & Generators ---
   const COLOR_PALETTE = [
-    '#38bdf8', // Neon Cyan
+    '#f59e0b', // Warm Honey Amber
     '#22c55e', // Emerald
     '#a855f7', // Electric Purple
     '#f43f5e', // Rose
@@ -854,7 +854,7 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    const safeAuthorColor = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#38bdf8';
+    const safeAuthorColor = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#f59e0b';
 
     // Render author name externally above the bubble row (omitted on consecutive messages from the same sender)
     const authorHtml = !isConsecutive
@@ -1122,7 +1122,7 @@
     state.replyTo = {
       id: msg.id,
       username: msg.username || 'Guest',
-      color: msg.color || '#38bdf8',
+      color: msg.color || '#f59e0b',
       text: msg.text || '',
       imageUrl: msg.imageUrl || null
     };
