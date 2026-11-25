@@ -18,6 +18,7 @@ server/node_modules/
 
 # Runtime Dynamic Data (Chat storage)
 server/data/messages.json
+server/data/users.json
 !server/data/.gitkeep
 
 # Runtime User Uploads

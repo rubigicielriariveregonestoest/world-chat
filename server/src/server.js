@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const uploadRoutes = require('./upload');
+const { router: authRoutes } = require('./auth');
 const registerSocketHandlers = require('./socketHandler');
 
 const app = express();
@@ -39,6 +40,7 @@ app.use(express.static(PUBLIC_DIR));
 
 // API routes
 app.use('/api', uploadRoutes);
+app.use('/api/auth', authRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', name: 'World Chat Server', timestamp: new Date().toISOString() });

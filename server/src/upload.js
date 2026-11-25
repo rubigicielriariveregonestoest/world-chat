@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const rateLimiter = require('./rateLimiter');
+const { validateToken } = require('./auth');
 
 let sharp;
 try {
@@ -55,7 +56,18 @@ function cleanupOldUploads() {
 
 router.post('/upload', upload.single('photo'), async (req, res) => {
   try {
-    const rawClientId = req.headers['x-client-id'];
+    // 0. Verify account linking (Gmail required)
+    const rawAuth = req.headers['authorization'] || req.headers['x-auth-token'] || '';
+    const authToken = rawAuth.startsWith('Bearer ') ? rawAuth.substring(7).trim() : rawAuth.trim();
+    const user = validateToken(authToken);
+
+    if (!user) {
+      return res.status(401).json({
+        error: 'Account link required. Please link your Gmail account to upload photos.'
+      });
+    }
+
+    const rawClientId = req.headers['x-client-id'] || user.id;
     const clientToken = (typeof rawClientId === 'string' && rawClientId.trim().length > 0) ? rawClientId.trim() : null;
     const clientIp = req.ip || req.connection?.remoteAddress || 'unknown_ip';
 
