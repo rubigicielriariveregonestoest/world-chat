@@ -4,7 +4,7 @@
   --bg-primary: #2c2a29;               /* Warm Espresso Base Canvas (Harmonizes with Light Theme #ede9e1) */
   --bg-secondary: #282625;             /* Secondary Warm Espresso Surface */
   --bg-card: #312f2e;                  /* Convex Extruded Card Surface (Pop OUT) */
-  --bg-card-own: #2e343e;              /* User's Own Deep Slate-Espresso Bubble */
+  --bg-card-own: #312f2e;              /* User's Own Standard Warm Espresso Bubble */
   --bg-inset: #242221;                 /* Sunken / Inset Void Cavity (Pop IN) */
   --bg-hover: #383533;                 /* Interactive Hover Elevation */
   --text-main: #f5f5f5;
@@ -788,18 +788,18 @@ body {
 }
 
 .own-message .msg-cloud-bubble {
-  background: linear-gradient(145deg, #2e343e, #262c35);
+  background: linear-gradient(145deg, #353331, #2d2b2a);
   border: none;
   border-radius: 18px;
   box-shadow: 
     7px 7px 16px rgba(15, 14, 13, 0.80), 
-    -5px -5px 13px rgba(56, 189, 248, 0.14);
+    -5px -5px 13px rgba(255, 250, 242, 0.08);
 }
 
 .own-message .msg-cloud-bubble:hover {
   box-shadow: 
     8px 8px 18px rgba(15, 14, 13, 0.86), 
-    -6px -6px 15px rgba(56, 189, 248, 0.20);
+    -6px -6px 15px rgba(255, 250, 242, 0.11);
 }
 
 /* External Message Header Layout (Name & Time Separated from Bubble) */
@@ -823,7 +823,7 @@ body {
 
 .msg-time-external {
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   opacity: 0.7; /* Opacity reduced by 30% for a softer aesthetic */
   margin-top: 4px;
   white-space: nowrap;
