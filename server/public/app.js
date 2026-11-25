@@ -551,6 +551,24 @@
     localStorage.setItem('wc_userId', state.userId);
   }
 
+  // --- Vector SVG Icons Registry ---
+  const Icons = {
+    eye: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    eyeOff: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
+    volumeOn: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`,
+    volumeOff: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`,
+    moon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+    sun: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+    reply: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>`,
+    camera: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+    close: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    arrowRight: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`,
+    timer: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    upload: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+    alertTriangle: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+    info: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+  };
+
   // --- DOM Elements ---
   const onlineCountEl = document.getElementById('online-count');
   const userAvatarEl = document.getElementById('user-avatar');
@@ -562,6 +580,7 @@
   const editProfileBtn = document.getElementById('edit-profile-btn');
   const toggleSoundBtn = document.getElementById('toggle-sound-btn');
   const toggleBlurBtn = document.getElementById('toggle-blur-btn');
+  const safeModeIcon = document.getElementById('safe-mode-icon');
   const safeModeBadge = document.getElementById('safe-mode-badge');
   const soundBadge = document.getElementById('sound-badge');
   const soundIcon = document.getElementById('sound-icon');
@@ -625,7 +644,8 @@
     SoundFX.toast(type);
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<span>${type === 'error' ? '⚠️' : 'ℹ️'}</span> <span>${message}</span>`;
+    const iconSvg = type === 'error' ? Icons.alertTriangle : Icons.info;
+    toast.innerHTML = `<span class="toast-icon">${iconSvg}</span> <span>${message}</span>`;
     toastContainer.appendChild(toast);
     setTimeout(() => {
       toast.style.opacity = '0';
@@ -654,14 +674,14 @@
     // Sound Button & Badge inside Dropdown
     if (state.soundEnabled) {
       toggleSoundBtn.classList.add('active');
-      if (soundIcon) soundIcon.innerText = '🔊';
+      if (soundIcon) soundIcon.innerHTML = Icons.volumeOn;
       if (soundBadge) {
         soundBadge.innerText = 'On';
         soundBadge.className = 'dropdown-item-badge on';
       }
     } else {
       toggleSoundBtn.classList.remove('active');
-      if (soundIcon) soundIcon.innerText = '🔇';
+      if (soundIcon) soundIcon.innerHTML = Icons.volumeOff;
       if (soundBadge) {
         soundBadge.innerText = 'Muted';
         soundBadge.className = 'dropdown-item-badge off';
@@ -672,6 +692,7 @@
     if (state.safeMode) {
       toggleBlurBtn.classList.add('active');
       messagesList.classList.add('safe-blur');
+      if (safeModeIcon) safeModeIcon.innerHTML = Icons.eye;
       if (safeModeBadge) {
         safeModeBadge.innerText = 'On';
         safeModeBadge.className = 'dropdown-item-badge on';
@@ -679,6 +700,7 @@
     } else {
       toggleBlurBtn.classList.remove('active');
       messagesList.classList.remove('safe-blur');
+      if (safeModeIcon) safeModeIcon.innerHTML = Icons.eyeOff;
       if (safeModeBadge) {
         safeModeBadge.innerText = 'Off';
         safeModeBadge.className = 'dropdown-item-badge off';
@@ -697,14 +719,14 @@
     if (themeBtn) {
       if (activeTheme === 'neomorphism-light') {
         themeBtn.classList.add('active');
-        if (themeIconEl) themeIconEl.innerText = '☀️';
+        if (themeIconEl) themeIconEl.innerHTML = Icons.sun;
         if (themeBadge) {
           themeBadge.innerText = 'Light';
           themeBadge.className = 'dropdown-item-badge theme';
         }
       } else {
         themeBtn.classList.remove('active');
-        if (themeIconEl) themeIconEl.innerText = '🌙';
+        if (themeIconEl) themeIconEl.innerHTML = Icons.moon;
         if (themeBadge) {
           themeBadge.innerText = 'Dark';
           themeBadge.className = 'dropdown-item-badge theme';
@@ -822,7 +844,7 @@
       imageHtml = `
         <div class="msg-image-container">
           <img src="${msg.imageUrl}" class="msg-image" alt="Uploaded photo" loading="lazy">
-          <div class="blur-overlay-tag">👁️ Click to view</div>
+          <div class="blur-overlay-tag">${Icons.eye} <span>Click to view</span></div>
         </div>
       `;
     }
@@ -848,10 +870,10 @@
           ? msg.replyTo.text.substring(0, 70) + '...'
           : msg.replyTo.text;
         if (msg.replyTo.imageUrl) {
-          quoteSnippet += ' 📷 [Photo]';
+          quoteSnippet += ' [Photo]';
         }
       } else if (msg.replyTo.imageUrl) {
-        quoteSnippet = '📷 [Photo]';
+        quoteSnippet = '[Photo]';
       } else {
         quoteSnippet = '...';
       }
@@ -862,6 +884,10 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+
+      const snippetWithIcon = msg.replyTo.imageUrl
+        ? `${Icons.camera} <span>${safeSnippet}</span>`
+        : safeSnippet;
 
       const safeQuoteAuthor = (msg.replyTo.username || 'Guest')
         .replace(/&/g, '&amp;')
@@ -874,10 +900,10 @@
       replyQuoteHtml = `
         <div class="msg-reply-quote" data-reply-to-id="${msg.replyTo.id}" style="border-left-color: ${safeQuoteColor};" title="Click to view original message">
           <div class="reply-quote-header" style="color: ${safeQuoteColor};">
-            <span class="reply-quote-icon">↩</span>
+            <span class="reply-quote-icon">${Icons.reply}</span>
             <span class="reply-quote-author">${safeQuoteAuthor}</span>
           </div>
-          <div class="reply-quote-snippet">${safeSnippet}</div>
+          <div class="reply-quote-snippet">${snippetWithIcon}</div>
         </div>
       `;
     }
@@ -893,7 +919,7 @@
         </div>
         <span class="msg-time-external">${formattedTime}</span>
         <button type="button" class="msg-reply-btn" title="Reply to this message" aria-label="Reply">
-          <span class="reply-btn-icon">↩</span>
+          <span class="reply-btn-icon">${Icons.reply}</span>
         </button>
       </div>
     `;
@@ -1111,14 +1137,26 @@
         ? state.replyTo.text.substring(0, 80) + '...' 
         : state.replyTo.text;
       if (state.replyTo.imageUrl) {
-        snippet += ' 📷 [Photo]';
+        snippet += ' [Photo]';
       }
     } else if (state.replyTo.imageUrl) {
-      snippet = '📷 [Photo]';
+      snippet = '[Photo]';
     } else {
       snippet = '...';
     }
-    replyBarSnippet.textContent = snippet;
+
+    const safeSnippet = snippet
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+    if (state.replyTo.imageUrl) {
+      replyBarSnippet.innerHTML = `${Icons.camera} <span>${safeSnippet}</span>`;
+    } else {
+      replyBarSnippet.textContent = snippet;
+    }
 
     replyPreviewBar.classList.remove('hidden');
     messageInput.focus();
@@ -1146,7 +1184,13 @@
         <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
       </svg>
     </span>
-    <span class="send-btn-label">Swipe ➔</span>
+    <span class="send-btn-label">
+      <span>Swipe</span>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </span>
   `;
 
   // --- Slowmode Cooldown Timer UI ---
@@ -1154,7 +1198,7 @@
     sendBtn.disabled = true;
     sendBtn.classList.add('countdown');
     let rem = seconds;
-    sendBtn.innerText = `⏳ ${rem}s`;
+    sendBtn.innerHTML = `${Icons.timer} <span>${rem}s</span>`;
     const interval = setInterval(() => {
       rem--;
       if (rem <= 0) {
@@ -1163,7 +1207,7 @@
         sendBtn.classList.remove('countdown');
         sendBtn.innerHTML = sendBtnIconHtml;
       } else {
-        sendBtn.innerText = `⏳ ${rem}s`;
+        sendBtn.innerHTML = `${Icons.timer} <span>${rem}s</span>`;
       }
     }, 1000);
   }
@@ -1186,7 +1230,7 @@
       try {
         state.isUploading = true;
         sendBtn.disabled = true;
-        sendBtn.innerText = '📤...';
+        sendBtn.innerHTML = `${Icons.upload} <span>Sending...</span>`;
 
         const formData = new FormData();
         formData.append('photo', state.stagedFile);
@@ -1316,7 +1360,7 @@
     swipeClickCount++;
     SoundFX.swipeHint();
 
-    // 1st click: show inline hint "Swipe ➔" with rightward nudge animation
+    // 1st click: show inline hint with rightward nudge animation
     sendBtn.classList.add('swipe-hint');
     clearTimeout(swipeHintTimeout);
     swipeHintTimeout = setTimeout(() => {
