@@ -275,7 +275,12 @@ module.exports = function registerSocketHandlers(io, releaseInfo = null) {
       const reaction = typeof payload.reaction === 'string' ? payload.reaction.trim() : '';
       if (!messageId || !db.ALLOWED_REACTIONS.includes(reaction)) return;
 
-      const updated = db.toggleReaction(messageId, reaction, session.userId);
+      const updated = db.toggleReaction(messageId, reaction, session.userId, {
+        username: session.username,
+        color: session.color,
+        userIcon: session.userIcon,
+        avatarUrl: session.avatarUrl || null
+      });
       if (updated) {
         io.emit('chat:reaction_update', updated);
       }

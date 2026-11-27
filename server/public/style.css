@@ -949,13 +949,17 @@ body {
   border-radius: 18px;
   padding: 10px 16px;
   box-shadow: var(--bubble-incoming-shadow);
-  transition: transform 0.15s ease, border-color 0.2s ease;
+  transition: transform 0.16s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   display: inline-block;
   min-width: 80px;
   position: relative;
 }
 
-.msg-cloud-bubble:hover {
+.msg-cloud-bubble:hover,
+.msg-cloud-bubble.mood-calm:hover,
+.msg-cloud-bubble.mood-spotlight:hover,
+.msg-cloud-bubble.mood-greeting:hover {
+  border-color: var(--bubble-incoming-border);
   box-shadow: var(--bubble-incoming-shadow);
   transform: translateY(-1px);
 }
@@ -968,7 +972,11 @@ body {
   box-shadow: var(--bubble-outgoing-shadow);
 }
 
-.own-message .msg-cloud-bubble:hover {
+.own-message .msg-cloud-bubble:hover,
+.own-message .msg-cloud-bubble.mood-calm:hover,
+.own-message .msg-cloud-bubble.mood-spotlight:hover,
+.own-message .msg-cloud-bubble.mood-greeting:hover {
+  border-color: var(--bubble-outgoing-border);
   box-shadow: var(--bubble-outgoing-shadow);
   transform: translateY(-1px);
 }
@@ -1020,7 +1028,13 @@ body {
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .mood-calm .mood-stage {
-  background: linear-gradient(135deg, rgba(13, 148, 136, 0.20), rgba(51, 65, 85, 0.14) 65%, rgba(30, 41, 59, 0.20));
+  background: linear-gradient(135deg, rgba(204, 251, 241, 0.50), rgba(224, 242, 254, 0.42) 65%, rgba(241, 245, 249, 0.48));
+}
+
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .mood-calm .msg-text,
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .mood-spotlight .msg-text,
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .mood-greeting .msg-text {
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.92);
 }
 
 .calm-storm-clouds {
@@ -1034,8 +1048,8 @@ body {
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .calm-storm-clouds {
   background:
-    radial-gradient(ellipse at 25% 25%, rgba(13, 148, 136, 0.24), transparent 55%),
-    radial-gradient(ellipse at 75% 65%, rgba(37, 99, 235, 0.18), transparent 55%);
+    radial-gradient(ellipse at 25% 25%, rgba(20, 184, 166, 0.18), transparent 55%),
+    radial-gradient(ellipse at 75% 65%, rgba(56, 189, 248, 0.16), transparent 55%);
 }
 
 .calm-lightning-flash {
@@ -1047,7 +1061,7 @@ body {
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .calm-lightning-flash {
-  background: radial-gradient(circle at 72% 28%, rgba(250, 204, 21, 0.55), rgba(59, 130, 246, 0.24) 65%, transparent 90%);
+  background: radial-gradient(circle at 72% 28%, rgba(254, 240, 138, 0.48), rgba(147, 197, 253, 0.22) 65%, transparent 90%);
 }
 
 .calm-bolt {
@@ -1063,8 +1077,8 @@ body {
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .calm-bolt {
-  color: #4f46e5;
-  filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.85));
+  color: #0284c7;
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.7));
 }
 
 .calm-wind-line {
@@ -1080,7 +1094,7 @@ body {
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .calm-wind-line {
-  background: linear-gradient(90deg, transparent, rgba(15, 118, 110, 0.48), transparent);
+  background: linear-gradient(90deg, transparent, rgba(13, 148, 136, 0.34), transparent);
 }
 
 .calm-leaf {
@@ -1100,11 +1114,12 @@ body {
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .calm-leaf {
-  color: #047857;
+  color: rgba(16, 185, 129, 0.65);
+  filter: none;
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .calm-leaf.alt {
-  color: #b45309;
+  color: rgba(245, 158, 11, 0.62);
 }
 
 @keyframes calmStormDrift {
@@ -1156,19 +1171,19 @@ body {
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-cloud-bubble.mood-spotlight {
-  border: 1px solid rgba(37, 99, 235, 0.45);
+  border: 1px solid rgba(56, 189, 248, 0.52);
   box-shadow:
     var(--bubble-incoming-shadow),
-    inset 0 0 24px rgba(37, 99, 235, 0.34),
-    inset 0 0 10px rgba(14, 165, 233, 0.28);
+    inset 0 0 18px rgba(56, 189, 248, 0.22),
+    inset 0 0 8px rgba(186, 230, 253, 0.34);
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .own-message .msg-cloud-bubble.mood-spotlight {
-  border: 1px solid rgba(37, 99, 235, 0.50);
+  border: 1px solid rgba(56, 189, 248, 0.56);
   box-shadow:
     var(--bubble-outgoing-shadow),
-    inset 0 0 24px rgba(37, 99, 235, 0.36),
-    inset 0 0 10px rgba(14, 165, 233, 0.30);
+    inset 0 0 18px rgba(56, 189, 248, 0.24),
+    inset 0 0 8px rgba(186, 230, 253, 0.36);
 }
 
 .spotlight-inner-glow {
@@ -1179,7 +1194,7 @@ body {
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .spotlight-inner-glow {
-  background: radial-gradient(ellipse at center, rgba(37, 99, 235, 0.22) 0%, rgba(14, 165, 233, 0.12) 55%, transparent 85%);
+  background: radial-gradient(ellipse at center, rgba(125, 211, 252, 0.28) 0%, rgba(186, 230, 253, 0.16) 55%, transparent 85%);
 }
 
 .spotlight-led-bar {
@@ -1214,8 +1229,8 @@ body {
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .spotlight-led {
-  background: #2563eb;
-  box-shadow: 0 0 6px 1px rgba(37, 99, 235, 0.78);
+  background: #38bdf8;
+  box-shadow: 0 0 5px 1px rgba(14, 165, 233, 0.65);
 }
 
 .spotlight-beam {
@@ -1225,6 +1240,10 @@ body {
   pointer-events: none;
   filter: blur(1px);
   opacity: 0.72;
+}
+
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .spotlight-beam {
+  opacity: 0.45;
 }
 
 .spotlight-beam.top-left {
@@ -1265,12 +1284,12 @@ body {
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .spotlight-beam.top-left,
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .spotlight-beam.bottom-left {
-  background: radial-gradient(ellipse at center, rgba(37, 99, 235, 0.36), rgba(14, 165, 233, 0.14) 65%, transparent 95%);
+  background: radial-gradient(ellipse at center, rgba(56, 189, 248, 0.24), rgba(147, 197, 253, 0.12) 65%, transparent 95%);
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .spotlight-beam.top-right,
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .spotlight-beam.bottom-right {
-  background: radial-gradient(ellipse at center, rgba(13, 148, 136, 0.34), rgba(59, 130, 246, 0.12) 65%, transparent 95%);
+  background: radial-gradient(ellipse at center, rgba(45, 212, 191, 0.22), rgba(125, 211, 252, 0.10) 65%, transparent 95%);
 }
 
 @keyframes spotlightInnerPulse {
@@ -1328,9 +1347,32 @@ body {
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .mood-sun-rays::before {
   background: repeating-conic-gradient(
     from 0deg,
-    rgba(245, 158, 11, 0.44) 0deg 10deg,
+    rgba(251, 191, 36, 0.28) 0deg 10deg,
     transparent 10deg 24deg
   );
+}
+
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .greeting-confetti {
+  filter: saturate(0.85) brightness(1.08);
+  opacity: 0;
+}
+
+.greeting-confetti {
+  --confetti-peak: 0.90;
+  --confetti-mid: 0.84;
+  position: absolute;
+  top: -14px;
+  width: 6px;
+  height: 9px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: greetingConfettiFall var(--dur, 3.4s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .greeting-confetti {
+  --confetti-peak: 0.56;
+  --confetti-mid: 0.48;
 }
 
 .mood-party-hat {
@@ -1346,15 +1388,41 @@ body {
   animation: greetingHatBob 2.4s ease-in-out infinite;
 }
 
-.greeting-confetti {
-  position: absolute;
-  top: -14px;
-  width: 6px;
-  height: 9px;
-  border-radius: 2px;
-  opacity: 0;
-  animation: greetingConfettiFall var(--dur, 3.4s) linear infinite;
-  animation-delay: var(--delay, 0s);
+/* Unified Dark & Light Hover Rim Transition for Both Standard and Mood Bubbles */
+.msg-cloud-bubble:hover,
+.msg-cloud-bubble.mood-calm:hover,
+.msg-cloud-bubble.mood-spotlight:hover,
+.msg-cloud-bubble.mood-greeting:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow: var(--bubble-incoming-shadow);
+  transform: translateY(-1px);
+}
+
+.own-message .msg-cloud-bubble:hover,
+.own-message .msg-cloud-bubble.mood-calm:hover,
+.own-message .msg-cloud-bubble.mood-spotlight:hover,
+.own-message .msg-cloud-bubble.mood-greeting:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: var(--bubble-outgoing-shadow);
+  transform: translateY(-1px);
+}
+
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-cloud-bubble:hover,
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-cloud-bubble.mood-calm:hover,
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-cloud-bubble.mood-spotlight:hover,
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-cloud-bubble.mood-greeting:hover {
+  border-color: var(--bubble-incoming-border);
+  box-shadow: var(--bubble-incoming-shadow);
+  transform: translateY(-1px);
+}
+
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .own-message .msg-cloud-bubble:hover,
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .own-message .msg-cloud-bubble.mood-calm:hover,
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .own-message .msg-cloud-bubble.mood-spotlight:hover,
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .own-message .msg-cloud-bubble.mood-greeting:hover {
+  border-color: var(--bubble-outgoing-border);
+  box-shadow: var(--bubble-outgoing-shadow);
+  transform: translateY(-1px);
 }
 
 @keyframes greetingRaysSpin {
@@ -1370,9 +1438,9 @@ body {
 
 @keyframes greetingConfettiFall {
   0% { top: -14%; transform: translateX(0px) rotate(0deg); opacity: 0; }
-  12% { opacity: 0.95; }
-  50% { top: 48%; transform: translateX(var(--sway, 8px)) rotate(190deg); opacity: 0.92; }
-  88% { opacity: 0.85; }
+  12% { opacity: var(--confetti-peak, 0.90); }
+  50% { top: 48%; transform: translateX(var(--sway, 8px)) rotate(190deg); opacity: var(--confetti-mid, 0.84); }
+  88% { opacity: var(--confetti-mid, 0.84); }
   100% { top: 108%; transform: translateX(calc(var(--sway, 8px) * -0.6)) rotate(360deg); opacity: 0; }
 }
 
@@ -2898,6 +2966,7 @@ body {
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-cloud-bubble:hover {
   border-color: var(--bubble-incoming-border);
   box-shadow: var(--bubble-incoming-shadow);
+  transform: translateY(-1px);
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-author,
@@ -4221,4 +4290,94 @@ body {
   opacity: 0;
   transform: scale(0.96) translateY(-4px);
   transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/*
+ * Chat Bubble Reaction Users Breakdown Modal
+ * Styles filter tabs for reacted emojis on a bubble and compact user rows
+ * showing each reactor's circular avatar, distinguished icon, and name.
+ */
+.reaction-users-modal-box {
+  max-width: 420px;
+}
+
+.reaction-filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.reaction-filter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-inset);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: inset 2px 2px 4px var(--neo-inset-dark), inset -1px -1px 3px var(--neo-inset-light);
+  transition: transform 0.14s ease, border-color 0.14s ease, color 0.14s ease, background 0.14s ease;
+}
+
+.reaction-filter-tab:hover {
+  transform: translateY(-1px);
+  color: var(--text-main);
+  border-color: var(--accent-cyan);
+}
+
+.reaction-filter-tab.active {
+  background: var(--bg-card);
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  box-shadow: 3px 3px 8px var(--neo-shadow-dark), -2px -2px 6px var(--neo-shadow-light);
+}
+
+.reaction-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.reaction-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-color);
+  box-shadow: inset 2px 2px 4px var(--neo-inset-dark), inset -1px -1px 3px var(--neo-inset-light);
+}
+
+.reaction-user-avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 0.88rem;
+}
+
+.reaction-user-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reaction-user-you {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--accent-calm);
+  border: 1px solid var(--border-color);
 }

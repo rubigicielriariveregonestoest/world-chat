@@ -16,10 +16,22 @@ function formatUpdateLabel(version) {
 // Chronological newest-first changelog so the active release leads and commit 50695b6 sits cleanly in history
 const RELEASE_HISTORY = [
   {
+    version: '1.5.0',
+    label: formatUpdateLabel('1.5.0'),
+    updateNumber: 5,
+    commit: 'latest',
+    title: 'Light Mood Readability, Dark Hover Parity & Reaction Users List',
+    highlights: [
+      'Refined Light-theme Message Card Mood effects with airy pastel tones so message text stays bright and readable',
+      'Matched Dark-theme chat bubble hover rim transitions cleanly with Light mode across normal and Mood bubbles',
+      'Click any reacted emoji pill beneath a chat bubble to see who reacted with Heart, Haha, Wow, Sad, or Angry'
+    ]
+  },
+  {
     version: '1.4.0',
     label: formatUpdateLabel('1.4.0'),
     updateNumber: 4,
-    commit: 'latest',
+    commit: '73d1de9',
     title: 'Animated Message Card Moods, 3s Soundscapes & Light Theme Visibility',
     highlights: [
       'Upgraded Calm Note (wind, swirling leaves, storm, thunder & lightning), Spotlight (LED uplights, waving spotlights & inner glow), and Greeting (endless confetti, top-left party hat & proportionate sun rays) into endless behind-text bubble animations',

@@ -9,7 +9,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="worldchat-version" content="1.4.0">
+  <meta name="worldchat-version" content="1.5.0">
   <title>World Chat — Global Live Chat</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
@@ -148,7 +148,7 @@
                   </svg>
                 </span>
                 <span class="dropdown-item-label">App Updates</span>
-                <span class="dropdown-item-badge on" id="dropdown-version-badge">Update 1.4.0</span>
+                <span class="dropdown-item-badge on" id="dropdown-version-badge">Update 1.5.0</span>
               </button>
             </div>
           </div>
@@ -430,7 +430,7 @@
             </svg>
           </span>
           <span>App Updates</span>
-          <span id="update-version-badge" class="update-version-pill">Update 1.4.0</span>
+          <span id="update-version-badge" class="update-version-pill">Update 1.5.0</span>
         </h3>
         <button type="button" id="close-update-notice" class="close-btn" title="Close">
           <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
@@ -440,7 +440,7 @@
       </div>
       <div class="modal-body">
         <p id="update-notice-subtitle" class="update-notice-subtitle">
-          World Chat Update 1.4.0 is ready! Review the changes below or click Update to apply.
+          World Chat Update 1.5.0 is ready! Review the changes below or click Update to apply.
         </p>
         <div class="update-highlights-card">
           <div class="update-highlights-heading">Latest Highlights</div>
@@ -641,6 +641,35 @@
       </div>
       <div class="modal-footer">
         <button type="button" id="close-reminder-ok-btn" class="primary-btn">Got it, thanks!</button>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    Chat Bubble Reaction Users Breakdown Modal
+    Displays clickable tabs solely for reacted emojis on a chat bubble and lists
+    every user who reacted with Heart, Haha, Wow, Sad, or Angry.
+  -->
+  <div id="reaction-users-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="reaction-users-title">
+    <div class="modal-card reaction-users-modal-box">
+      <div class="modal-header">
+        <h3 id="reaction-users-title">
+          <span>Reactions</span>
+          <span id="reaction-users-total" class="update-version-pill">0</span>
+        </h3>
+        <button type="button" id="close-reaction-users" class="close-btn" title="Close">
+          <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="reaction-filter-tabs" class="reaction-filter-tabs" role="tablist"></div>
+        <div id="reaction-users-list" class="reaction-users-list"></div>
+      </div>
+      <div class="modal-footer update-actions-row">
+        <button type="button" id="toggle-active-reaction-btn" class="btn-secondary-neo">React</button>
+        <button type="button" id="close-reaction-users-btn" class="primary-btn update-confirm-btn">Close</button>
       </div>
     </div>
   </div>

@@ -695,7 +695,7 @@
   const NOUNS = ['Pulsar', 'Voyager', 'Comet', 'Falcon', 'Orion', 'Nomad', 'Spark', 'Phoenix', 'Star', 'Specter', 'Drifter', 'Echo'];
 
   const DISTINGUISHED_USER_ICONS = ['🌟', '🚀', '🌙', '☀️', '🪐', '🔥', '⚡', '🧭', '🦋', '🦊', '🐬', '💎'];
-  const CLIENT_APP_VERSION = '1.4.0';
+  const CLIENT_APP_VERSION = '1.5.0';
 
   function formatUpdateLabel(version) {
     const clean = String(version || '').trim().replace(/^v/i, '');
@@ -704,10 +704,22 @@
 
   const DEFAULT_RELEASE_HISTORY = [
     {
+      version: '1.5.0',
+      label: formatUpdateLabel('1.5.0'),
+      updateNumber: 5,
+      commit: 'latest',
+      title: 'Light Mood Readability, Dark Hover Parity & Reaction Users List',
+      highlights: [
+        'Refined Light-theme Message Card Mood effects with airy pastel tones so message text stays bright and readable',
+        'Matched Dark-theme chat bubble hover rim transitions cleanly with Light mode across normal and Mood bubbles',
+        'Click any reacted emoji pill beneath a chat bubble to see who reacted with Heart, Haha, Wow, Sad, or Angry'
+      ]
+    },
+    {
       version: '1.4.0',
       label: formatUpdateLabel('1.4.0'),
       updateNumber: 4,
-      commit: 'latest',
+      commit: '73d1de9',
       title: 'Animated Message Card Moods, 3s Soundscapes & Light Theme Visibility',
       highlights: [
         'Upgraded Calm Note (wind, swirling leaves, storm, thunder & lightning), Spotlight (LED uplights, waving spotlights & inner glow), and Greeting (endless confetti, top-left party hat & proportionate sun rays) into endless behind-text bubble animations',
@@ -1038,6 +1050,14 @@
   const photoReminderHeading = document.getElementById('photo-reminder-heading');
   const photoReminderMessage = document.getElementById('photo-reminder-message');
   const photoReminderTip = document.getElementById('photo-reminder-tip');
+
+  const reactionUsersModal = document.getElementById('reaction-users-modal');
+  const closeReactionUsersBtn = document.getElementById('close-reaction-users');
+  const closeReactionUsersFooterBtn = document.getElementById('close-reaction-users-btn');
+  const reactionUsersTotal = document.getElementById('reaction-users-total');
+  const reactionFilterTabs = document.getElementById('reaction-filter-tabs');
+  const reactionUsersList = document.getElementById('reaction-users-list');
+  const toggleActiveReactionBtn = document.getElementById('toggle-active-reaction-btn');
 
   let modalSelectedColor = state.color;
   let modalSelectedIcon = state.userIcon;
@@ -1739,7 +1759,16 @@
     if (!payload || !payload.messageId) return;
     const msgEl = messagesList.querySelector(`[data-msg-id="${payload.messageId}"]`);
     if (msgEl) {
-      renderMessageReactions(msgEl, payload.reactions, true);
+      if (msgEl._msgData) {
+        msgEl._msgData.reactions = payload.reactions || {};
+        if (payload.reactionMeta) {
+          msgEl._msgData.reactionMeta = payload.reactionMeta;
+        }
+      }
+      renderMessageReactions(msgEl, payload.reactions, true, payload.reactionMeta || null);
+      if (activeReactionUsersMsgId === payload.messageId && reactionUsersModal && !reactionUsersModal.classList.contains('hidden')) {
+        renderReactionUsersModal(msgEl._msgData || { id: payload.messageId, reactions: payload.reactions, reactionMeta: payload.reactionMeta });
+      }
     }
   });
 
@@ -1950,9 +1979,169 @@
     return out;
   }
 
-  function renderMessageReactions(msgEl, reactions = {}, burstAnimate = false) {
+  /*
+   * Chat Bubble Reaction Users Breakdown Modal
+   * Opens when clicking any reacted emoji pill on a message, displaying tabs
+   * exclusively for the emojis reacted on that bubble plus every user who reacted.
+   */
+  let activeReactionUsersMsgId = null;
+  let activeReactionUsersType = null;
+
+  function closeReactionUsersModal() {
+    activeReactionUsersMsgId = null;
+    activeReactionUsersType = null;
+    if (!reactionUsersModal || reactionUsersModal.classList.contains('hidden')) return;
+    SoundFX.modalClose();
+    reactionUsersModal.classList.add('hidden');
+  }
+
+  function resolveReactorIdentity(uid, reactionMeta) {
+    if (reactionMeta && reactionMeta[uid]) {
+      return reactionMeta[uid];
+    }
+    if (uid === state.userId) {
+      return {
+        userId: state.userId,
+        username: state.username,
+        color: state.color,
+        userIcon: state.userIcon,
+        avatarUrl: state.avatarUrl || ''
+      };
+    }
+    // Look up known sender identity from visible chat messages if legacy reaction lacked metadata
+    const sampleEl = Array.from(messagesList.children).find(el => el.dataset.senderId === uid && el._msgData);
+    if (sampleEl && sampleEl._msgData) {
+      return {
+        userId: uid,
+        username: sampleEl._msgData.username || 'Guest',
+        color: sampleEl._msgData.color || '#38bdf8',
+        userIcon: sampleEl._msgData.userIcon,
+        avatarUrl: sampleEl._msgData.avatarUrl || ''
+      };
+    }
+    return {
+      userId: uid,
+      username: `Guest (${String(uid).slice(-4)})`,
+      color: '#38bdf8',
+      userIcon: pickDefaultUserIcon(uid),
+      avatarUrl: ''
+    };
+  }
+
+  function renderReactionUsersModal(msgData, preferredType = null) {
+    if (!reactionUsersModal || !msgData) return;
+    const reactions = msgData.reactions || {};
+    const reactionMeta = msgData.reactionMeta || {};
+    const reactedTypes = REACTION_TYPES.filter(t => Array.isArray(reactions[t]) && reactions[t].length > 0);
+
+    if (reactedTypes.length === 0) {
+      closeReactionUsersModal();
+      return;
+    }
+
+    if (preferredType && reactedTypes.includes(preferredType)) {
+      activeReactionUsersType = preferredType;
+    } else if (!activeReactionUsersType || !reactedTypes.includes(activeReactionUsersType)) {
+      activeReactionUsersType = reactedTypes[0];
+    }
+
+    const totalCount = reactedTypes.reduce((sum, t) => sum + reactions[t].length, 0);
+    if (reactionUsersTotal) {
+      reactionUsersTotal.textContent = String(totalCount);
+    }
+
+    if (reactionFilterTabs) {
+      reactionFilterTabs.innerHTML = '';
+      reactedTypes.forEach(type => {
+        const count = reactions[type].length;
+        const tabBtn = document.createElement('button');
+        tabBtn.type = 'button';
+        tabBtn.className = `reaction-filter-tab ${type === activeReactionUsersType ? 'active' : ''}`;
+        tabBtn.setAttribute('role', 'tab');
+        tabBtn.setAttribute('aria-selected', String(type === activeReactionUsersType));
+        tabBtn.innerHTML = `${ReactionIcons[type]}<span>${REACTION_LABELS[type]}</span><span>${count}</span>`;
+        tabBtn.addEventListener('click', () => {
+          SoundFX.click();
+          activeReactionUsersType = type;
+          renderReactionUsersModal(msgData, type);
+        });
+        reactionFilterTabs.appendChild(tabBtn);
+      });
+    }
+
+    const activeUserIds = Array.isArray(reactions[activeReactionUsersType]) ? reactions[activeReactionUsersType] : [];
+    if (reactionUsersList) {
+      reactionUsersList.innerHTML = '';
+      activeUserIds.forEach(uid => {
+        const info = resolveReactorIdentity(uid, reactionMeta);
+        const row = document.createElement('div');
+        row.className = 'reaction-user-row';
+
+        const avatarEl = document.createElement('div');
+        avatarEl.className = 'msg-bubble-avatar reaction-user-avatar';
+        applyBubbleAvatarVisual(avatarEl, info.avatarUrl, info.username, info.color, info.userIcon);
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'reaction-user-name';
+        nameEl.style.color = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(info.color) ? info.color : 'var(--text-main)';
+        nameEl.textContent = info.username || 'Guest';
+
+        row.appendChild(avatarEl);
+        row.appendChild(nameEl);
+
+        if (uid === state.userId) {
+          const youBadge = document.createElement('span');
+          youBadge.className = 'reaction-user-you';
+          youBadge.textContent = 'You';
+          row.appendChild(youBadge);
+        }
+
+        reactionUsersList.appendChild(row);
+      });
+    }
+
+    if (toggleActiveReactionBtn) {
+      const iReacted = activeUserIds.includes(state.userId);
+      const label = REACTION_LABELS[activeReactionUsersType] || 'Reaction';
+      toggleActiveReactionBtn.textContent = iReacted ? `Remove ${label}` : `React ${label}`;
+    }
+  }
+
+  function openReactionUsersModal(msgData, preferredType = null) {
+    if (!reactionUsersModal || !msgData || !msgData.id) return;
+    activeReactionUsersMsgId = msgData.id;
+    renderReactionUsersModal(msgData, preferredType);
+    if (activeReactionUsersMsgId && reactionUsersModal.classList.contains('hidden')) {
+      SoundFX.modalOpen();
+      reactionUsersModal.classList.remove('hidden');
+    }
+  }
+
+  if (closeReactionUsersBtn) closeReactionUsersBtn.addEventListener('click', closeReactionUsersModal);
+  if (closeReactionUsersFooterBtn) closeReactionUsersFooterBtn.addEventListener('click', closeReactionUsersModal);
+  if (reactionUsersModal) {
+    reactionUsersModal.addEventListener('click', (e) => {
+      if (e.target === reactionUsersModal) closeReactionUsersModal();
+    });
+  }
+  if (toggleActiveReactionBtn) {
+    toggleActiveReactionBtn.addEventListener('click', () => {
+      if (!activeReactionUsersMsgId || !activeReactionUsersType) return;
+      SoundFX.click();
+      socket.emit('chat:react', { messageId: activeReactionUsersMsgId, reaction: activeReactionUsersType });
+    });
+  }
+
+  function renderMessageReactions(msgEl, reactions = {}, burstAnimate = false, reactionMeta = null) {
     const row = msgEl.querySelector('.msg-reactions-row');
     if (!row) return;
+
+    if (msgEl._msgData) {
+      msgEl._msgData.reactions = reactions;
+      if (reactionMeta) {
+        msgEl._msgData.reactionMeta = reactionMeta;
+      }
+    }
 
     const previousCounts = {};
     row.querySelectorAll('.reaction-pill').forEach(btn => {
@@ -1978,13 +2167,14 @@
       }
       pill.dataset.reaction = type;
       pill.dataset.count = String(users.length);
-      pill.title = `${REACTION_LABELS[type]} (${users.length})`;
+      pill.title = `View ${REACTION_LABELS[type]} reactions (${users.length})`;
       pill.innerHTML = `${ReactionIcons[type]}<span>${users.length}</span>`;
 
       pill.addEventListener('click', (e) => {
         e.stopPropagation();
         SoundFX.click();
-        socket.emit('chat:react', { messageId: msgId, reaction: type });
+        const modalPayload = msgEl._msgData || { id: msgId, reactions, reactionMeta: reactionMeta || {} };
+        openReactionUsersModal(modalPayload, type);
       });
 
       row.appendChild(pill);
@@ -2225,7 +2415,7 @@
     `;
 
     // Populate any existing reactions from history
-    renderMessageReactions(item, msg.reactions || {});
+    renderMessageReactions(item, msg.reactions || {}, false, msg.reactionMeta || {});
 
     // Automatically fall back broken left bubble avatar images to the user's colored distinguished icon
     const bubbleAvatarEl = item.querySelector('.msg-bubble-avatar');
@@ -3495,7 +3685,8 @@
       const updateWasOpen = updateNoticeModal && !updateNoticeModal.classList.contains('hidden');
       const deleteWasOpen = deleteConfirmModal && !deleteConfirmModal.classList.contains('hidden');
       const reminderWasOpen = photoReminderModal && !photoReminderModal.classList.contains('hidden');
-      const modalOpen = !lightboxModal.classList.contains('hidden') || profileWasOpen || updateWasOpen || deleteWasOpen || reminderWasOpen;
+      const reactionUsersWasOpen = reactionUsersModal && !reactionUsersModal.classList.contains('hidden');
+      const modalOpen = !lightboxModal.classList.contains('hidden') || profileWasOpen || updateWasOpen || deleteWasOpen || reminderWasOpen || reactionUsersWasOpen;
       if (modalOpen) {
         SoundFX.modalClose();
       }
@@ -3523,6 +3714,7 @@
         pendingDeleteMessageId = null;
       }
       if (photoReminderModal) photoReminderModal.classList.add('hidden');
+      if (reactionUsersModal) closeReactionUsersModal();
     }
   });
 })();

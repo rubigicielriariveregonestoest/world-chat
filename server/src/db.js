@@ -121,10 +121,26 @@ function sanitizeAvatarUrl(rawUrl) {
   return null;
 }
 
+function normalizeReactionMeta(rawMeta) {
+  const clean = {};
+  if (!rawMeta || typeof rawMeta !== 'object') return clean;
+  for (const [uid, info] of Object.entries(rawMeta)) {
+    if (typeof uid !== 'string' || !uid || !info || typeof info !== 'object') continue;
+    clean[uid] = {
+      userId: uid,
+      username: info.username ? String(info.username).substring(0, 24) : 'Guest',
+      color: /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(info.color) ? info.color : '#38bdf8',
+      userIcon: normalizeUserIcon(info.userIcon, uid),
+      avatarUrl: sanitizeAvatarUrl(info.avatarUrl)
+    };
+  }
+  return clean;
+}
+
 /*
  * Public Database API (Read, Append & Reaction Toggling)
  * Exposes history retrieval, reply lookup, sanitized message creation (including
- * optional avatarUrl and styleVariant), and real-time reaction state updates.
+ * optional avatarUrl, styleVariant, and reactor metadata), and reaction state updates.
  */
 module.exports = {
   ALLOWED_REACTIONS,
@@ -139,7 +155,8 @@ module.exports = {
       avatarUrl: sanitizeAvatarUrl(m.avatarUrl),
       userIcon: normalizeUserIcon(m.userIcon, m.userId || m.username),
       styleVariant: ALLOWED_STYLE_VARIANTS.includes(m.styleVariant) ? m.styleVariant : 'default',
-      reactions: normalizeReactions(m.reactions)
+      reactions: normalizeReactions(m.reactions),
+      reactionMeta: normalizeReactionMeta(m.reactionMeta)
     }));
   },
 
@@ -164,6 +181,7 @@ module.exports = {
       imageUrl: msg.imageUrl || null,
       styleVariant,
       reactions: createEmptyReactions(),
+      reactionMeta: {},
       timestamp: msg.timestamp || new Date().toISOString(),
       replyTo: msg.replyTo ? {
         id: msg.replyTo.id,
@@ -181,7 +199,7 @@ module.exports = {
     return record;
   },
 
-  toggleReaction(messageId, reactionType, userId) {
+  toggleReaction(messageId, reactionType, userId, userMeta = null) {
     if (!messageId || !userId || !ALLOWED_REACTIONS.includes(reactionType)) {
       return null;
     }
@@ -189,18 +207,32 @@ module.exports = {
     if (!target) return null;
 
     target.reactions = normalizeReactions(target.reactions);
+    target.reactionMeta = normalizeReactionMeta(target.reactionMeta);
     const list = target.reactions[reactionType];
     const existingIdx = list.indexOf(userId);
     if (existingIdx >= 0) {
       list.splice(existingIdx, 1);
+      const stillHasAny = ALLOWED_REACTIONS.some(r => target.reactions[r].includes(userId));
+      if (!stillHasAny) {
+        delete target.reactionMeta[userId];
+      }
     } else {
       list.push(userId);
+      const fallbackName = target.reactionMeta[userId]?.username || 'Guest';
+      target.reactionMeta[userId] = {
+        userId,
+        username: userMeta && userMeta.username ? String(userMeta.username).substring(0, 24) : fallbackName,
+        color: userMeta && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(userMeta.color) ? userMeta.color : '#38bdf8',
+        userIcon: normalizeUserIcon(userMeta && userMeta.userIcon, userId),
+        avatarUrl: sanitizeAvatarUrl(userMeta && userMeta.avatarUrl)
+      };
     }
 
     schedulePersist();
     return {
       messageId: target.id,
-      reactions: target.reactions
+      reactions: target.reactions,
+      reactionMeta: target.reactionMeta
     };
   },
 
