@@ -516,23 +516,53 @@
     backdropLight: ['#e7edf5', '#e3ecf5', '#e3f0ee', '#eae8f4', '#edf2f7']
   };
 
-  function loadSavedWidgetColors() {
+  const EMPTY_WIDGET_COLORS = { accent: '', incoming: '', outgoing: '', surface: '', backdrop: '' };
+
+  function normalizeWidgetSet(raw) {
+    if (!raw || typeof raw !== 'object') return { ...EMPTY_WIDGET_COLORS };
+    return {
+      accent: raw.accent || '',
+      incoming: raw.incoming || '',
+      outgoing: raw.outgoing || '',
+      surface: raw.surface || '',
+      backdrop: raw.backdrop || ''
+    };
+  }
+
+  function cloneWidgetMap(map) {
+    return {
+      'neomorphism-dark': normalizeWidgetSet(map && map['neomorphism-dark']),
+      'neomorphism-light': normalizeWidgetSet(map && map['neomorphism-light'])
+    };
+  }
+
+  function getThemeKey(theme) {
+    return (theme === 'neomorphism-light' || theme === 'neomorphism' || theme === 'light')
+      ? 'neomorphism-light'
+      : 'neomorphism-dark';
+  }
+
+  function loadSavedWidgetColors(initialTheme = 'neomorphism-dark') {
+    const emptyMap = {
+      'neomorphism-dark': { ...EMPTY_WIDGET_COLORS },
+      'neomorphism-light': { ...EMPTY_WIDGET_COLORS }
+    };
     try {
       const raw = localStorage.getItem('wc_widget_colors');
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object') {
-          return {
-            accent: parsed.accent || '',
-            incoming: parsed.incoming || '',
-            outgoing: parsed.outgoing || '',
-            surface: parsed.surface || '',
-            backdrop: parsed.backdrop || ''
-          };
+          if (parsed['neomorphism-dark'] || parsed['neomorphism-light']) {
+            return cloneWidgetMap(parsed);
+          }
+          // Migrate legacy flat config exclusively to the initial theme so the opposite stays default
+          const key = getThemeKey(initialTheme);
+          emptyMap[key] = normalizeWidgetSet(parsed);
+          return emptyMap;
         }
       }
     } catch (_) {}
-    return { accent: '', incoming: '', outgoing: '', surface: '', backdrop: '' };
+    return emptyMap;
   }
 
   const ADJECTIVES = ['Cosmic', 'Starlight', 'Astro', 'Nova', 'Nebula', 'Eclipse', 'Quantum', 'Solar', 'Zenith', 'Celestial', 'Lunar', 'Astral'];
@@ -606,7 +636,7 @@
       }
       return 'neomorphism-dark';
     })(),
-    widgetColors: loadSavedWidgetColors(),
+    widgetColorsByTheme: null,
     messageMood: 'default',
     stagedFile: null,
     stagedFileUrl: null,
@@ -617,6 +647,12 @@
     isNearBottom: true,
     lastTypingSent: 0
   };
+  state.widgetColorsByTheme = loadSavedWidgetColors(state.theme);
+
+  function getActiveWidgetColors(theme = state.theme) {
+    const key = getThemeKey(theme);
+    return state.widgetColorsByTheme[key] || { ...EMPTY_WIDGET_COLORS };
+  }
 
   // Initialize guest profile if not stored
   if (!state.clientToken || !state.username) {
@@ -652,7 +688,8 @@
     upload: `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" class="neo-icon"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>`,
     alertTriangle: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="neo-icon"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>`,
     info: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="neo-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`,
-    react: `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" class="neo-icon"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>`
+    react: `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" class="neo-icon"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>`,
+    trash: `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" class="neo-icon"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`
   };
 
   /*
@@ -791,9 +828,29 @@
 
   const toastContainer = document.getElementById('toast-container');
 
+  const widgetTargetDarkBtn = document.getElementById('widget-target-dark-btn');
+  const widgetTargetLightBtn = document.getElementById('widget-target-light-btn');
+  const widgetTargetThemeNote = document.getElementById('widget-target-theme-note');
+
+  const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+  const closeDeleteModalBtn = document.getElementById('close-delete-modal');
+  const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+  const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+  const deleteConfirmPreview = document.getElementById('delete-confirm-preview');
+
+  const photoReminderModal = document.getElementById('photo-reminder-modal');
+  const closePhotoReminderBtn = document.getElementById('close-photo-reminder');
+  const closeReminderOkBtn = document.getElementById('close-reminder-ok-btn');
+  const photoReminderHeading = document.getElementById('photo-reminder-heading');
+  const photoReminderMessage = document.getElementById('photo-reminder-message');
+  const photoReminderTip = document.getElementById('photo-reminder-tip');
+
   let modalSelectedColor = state.color;
   let modalSelectedIcon = state.userIcon;
-  let modalWidgetColors = { ...state.widgetColors };
+  let modalEditingTheme = getThemeKey(state.theme);
+  let modalInitialTheme = getThemeKey(state.theme);
+  let modalWidgetColorsByTheme = cloneWidgetMap(state.widgetColorsByTheme);
+  let pendingDeleteMessageId = null;
 
   // --- Toast Notifications ---
   function showToast(message, type = 'info', duration = 3500) {
@@ -812,23 +869,130 @@
   }
 
   /*
-   * Header Avatar Renderer, Bubble Avatar + Distinguished Icon Builder & Theme Engine
-   * Renders circular profile photos with distinguished user icons (for header,
-   * modal preview, and left-side chat bubbles), synchronizes toggle badges, and
-   * freezes CSS transitions briefly during theme flips to prevent mobile lag.
+   * Header Avatar Renderer, Bubble Avatar + Distinguished Icon Builder & Image Optimizer
+   * Validates flexible image formats, auto-resizes oversize >5MB photos on canvas,
+   * renders circular profile photos with distinguished icons and broken-image fallback,
+   * and freezes CSS transitions briefly during theme flips to prevent mobile lag.
    */
+  const SUPPORTED_IMAGE_EXT = /\.(jpe?g|jfif|png|webp|gif|avif|bmp|tiff?|ico|svg|heic|heif)$/i;
+
+  function isFlexibleImageFile(file) {
+    if (!file) return false;
+    const typeOk = Boolean(file.type && file.type.toLowerCase().startsWith('image/'));
+    const extOk = Boolean(file.name && SUPPORTED_IMAGE_EXT.test(file.name.trim()));
+    return typeOk || extOk;
+  }
+
+  function sanitizeAvatarUrl(rawUrl, allowBlob = false) {
+    if (typeof rawUrl !== 'string') return '';
+    const trimmed = rawUrl.trim();
+    if (/^\/uploads\/[a-zA-Z0-9_.-]+\.(webp|gif|png|jpg|jpeg)$/.test(trimmed)) return trimmed;
+    if (/^data:image\/(webp|jpeg|png);base64,[A-Za-z0-9+/=]{16,32000}$/.test(trimmed)) return trimmed;
+    if (allowBlob && /^blob:https?:\/\//.test(trimmed)) return trimmed;
+    return '';
+  }
+
+  async function compressImageFileIfNeeded(file, options = {}) {
+    if (!file) return file;
+    const isProfile = options.target === 'profile';
+    const maxBytes = options.maxBytes || (isProfile ? 450 * 1024 : 4.5 * 1024 * 1024);
+    const isGif = file.type === 'image/gif' || /\.gif$/i.test(file.name || '');
+
+    // Preserve animated GIFs under 5MB untouched so animation stays intact
+    if (isGif && file.size <= 5 * 1024 * 1024) {
+      return file;
+    }
+
+    const isStandardFast = ['image/jpeg', 'image/png', 'image/webp'].includes((file.type || '').toLowerCase());
+    if (!isProfile && isStandardFast && file.size <= maxBytes) {
+      return file;
+    }
+
+    try {
+      let source = null;
+      let revokeUrl = '';
+      if (typeof createImageBitmap === 'function') {
+        try {
+          source = await createImageBitmap(file);
+        } catch (_) {
+          source = null;
+        }
+      }
+      if (!source) {
+        source = await new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          revokeUrl = url;
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('decode_failed'));
+          img.src = url;
+        });
+      }
+
+      const origW = source.width || source.naturalWidth || 0;
+      const origH = source.height || source.naturalHeight || 0;
+      if (!origW || !origH) {
+        if (revokeUrl) URL.revokeObjectURL(revokeUrl);
+        if (source && typeof source.close === 'function') source.close();
+        return file;
+      }
+
+      const steps = isProfile
+        ? [{ maxDim: 512, q: 0.86 }, { maxDim: 384, q: 0.78 }, { maxDim: 256, q: 0.68 }]
+        : [{ maxDim: 1920, q: 0.84 }, { maxDim: 1440, q: 0.76 }, { maxDim: 1080, q: 0.66 }, { maxDim: 800, q: 0.56 }];
+
+      let bestBlob = null;
+      for (const step of steps) {
+        const scale = Math.min(1, step.maxDim / Math.max(origW, origH));
+        const targetW = Math.max(1, Math.round(origW * scale));
+        const targetH = Math.max(1, Math.round(origH * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) break;
+        ctx.drawImage(source, 0, 0, targetW, targetH);
+
+        let blob = await new Promise(res => canvas.toBlob(res, 'image/webp', step.q));
+        if (!blob || blob.type === 'image/png') {
+          blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', step.q));
+        }
+        if (blob) {
+          bestBlob = blob;
+          if (blob.size <= maxBytes) break;
+        }
+      }
+
+      if (revokeUrl) URL.revokeObjectURL(revokeUrl);
+      if (source && typeof source.close === 'function') source.close();
+
+      if (bestBlob && (bestBlob.size <= file.size || !isStandardFast || bestBlob.size <= maxBytes)) {
+        const ext = bestBlob.type === 'image/jpeg' ? 'jpg' : 'webp';
+        const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
+        return new File([bestBlob], `${baseName}.${ext}`, { type: bestBlob.type, lastModified: Date.now() });
+      }
+    } catch (_) {
+      // Fall back to original file so server Sharp pipeline can convert non-browser formats (e.g. HEIC/TIFF)
+    }
+    return file;
+  }
+
   // --- UI Update Helpers ---
   function renderAvatarElement(el, avatarUrl, username, color, userIcon = state.userIcon) {
     if (!el) return;
     el.style.backgroundColor = color || 'var(--accent-cyan)';
-    if (avatarUrl) {
+    const icon = resolveUserIcon(userIcon, username);
+    const validUrl = sanitizeAvatarUrl(avatarUrl, true);
+    if (validUrl) {
       el.innerHTML = '';
       const img = document.createElement('img');
-      img.src = avatarUrl;
+      img.src = validUrl;
       img.alt = username || 'Avatar';
+      img.addEventListener('error', () => {
+        el.innerHTML = `<span class="noto-emoji avatar-glyph" aria-hidden="true">${icon}</span>`;
+      }, { once: true });
       el.appendChild(img);
     } else {
-      const icon = resolveUserIcon(userIcon, username);
       el.innerHTML = `<span class="noto-emoji avatar-glyph" aria-hidden="true">${icon}</span>`;
     }
   }
@@ -837,13 +1001,17 @@
     if (!el) return;
     const safeColor = isValidHexColor(color) ? color : '#38bdf8';
     const icon = resolveUserIcon(userIcon, username);
+    const validUrl = sanitizeAvatarUrl(avatarUrl, true);
     el.innerHTML = '';
-    if (avatarUrl) {
+    if (validUrl) {
       el.style.background = 'var(--bg-card)';
       const img = document.createElement('img');
-      img.src = avatarUrl;
+      img.src = validUrl;
       img.className = 'msg-bubble-avatar-img';
       img.alt = username || 'Avatar';
+      img.addEventListener('error', () => {
+        applyBubbleAvatarVisual(el, '', username, safeColor, icon);
+      }, { once: true });
       el.appendChild(img);
 
       const badge = document.createElement('span');
@@ -984,16 +1152,17 @@
     };
   }
 
-  function applyWidgetColors(colorsObj = state.widgetColors) {
+  function applyWidgetColors(colorsObj = getActiveWidgetColors(), themeOverride = state.theme) {
     const root = document.documentElement;
-    const isLight = state.theme === 'neomorphism-light';
+    const isLight = getThemeKey(themeOverride) === 'neomorphism-light';
+    const colors = normalizeWidgetSet(colorsObj);
 
     // Surrounding canvas backdrop & global neomorphic shadow harmonization
-    if (isValidHexColor(colorsObj.backdrop)) {
-      const { r, g, b } = hexToRgb(colorsObj.backdrop);
+    if (isValidHexColor(colors.backdrop)) {
+      const { r, g, b } = hexToRgb(colors.backdrop);
       const isDarkBackdrop = ((0.299 * r + 0.587 * g + 0.114 * b) / 255) < 0.52;
-      root.style.setProperty('--bg-primary', colorsObj.backdrop);
-      root.style.setProperty('--bg-secondary', adjustHexColor(colorsObj.backdrop, isDarkBackdrop ? -6 : -8));
+      root.style.setProperty('--bg-primary', colors.backdrop);
+      root.style.setProperty('--bg-secondary', adjustHexColor(colors.backdrop, isDarkBackdrop ? -6 : -8));
       root.style.setProperty(
         '--neo-shadow-dark',
         `rgba(${Math.max(0, Math.round(r * 0.45))}, ${Math.max(0, Math.round(g * 0.45))}, ${Math.max(0, Math.round(b * 0.45))}, ${isDarkBackdrop ? 0.78 : 0.44})`
@@ -1019,18 +1188,18 @@
       root.style.removeProperty('--neo-inset-light');
     }
 
-    if (isValidHexColor(colorsObj.accent)) {
-      root.style.setProperty('--accent-cyan', colorsObj.accent);
-      root.style.setProperty('--accent-hover', adjustHexColor(colorsObj.accent, isLight ? -16 : 18));
-      root.style.setProperty('--accent-btn-text', computeContrastText(colorsObj.accent));
+    if (isValidHexColor(colors.accent)) {
+      root.style.setProperty('--accent-cyan', colors.accent);
+      root.style.setProperty('--accent-hover', adjustHexColor(colors.accent, isLight ? -16 : 18));
+      root.style.setProperty('--accent-btn-text', computeContrastText(colors.accent));
     } else {
       root.style.removeProperty('--accent-cyan');
       root.style.removeProperty('--accent-hover');
       root.style.removeProperty('--accent-btn-text');
     }
 
-    if (isValidHexColor(colorsObj.incoming)) {
-      const incTokens = buildBubbleNeomorphicTokens(colorsObj.incoming, isLight);
+    if (isValidHexColor(colors.incoming)) {
+      const incTokens = buildBubbleNeomorphicTokens(colors.incoming, isLight);
       root.style.setProperty('--bubble-incoming-bg', incTokens.bg);
       root.style.setProperty('--bubble-incoming-text', incTokens.text);
       root.style.setProperty('--bubble-incoming-border', incTokens.border);
@@ -1042,8 +1211,8 @@
       root.style.removeProperty('--bubble-incoming-shadow');
     }
 
-    if (isValidHexColor(colorsObj.outgoing)) {
-      const outTokens = buildBubbleNeomorphicTokens(colorsObj.outgoing, isLight);
+    if (isValidHexColor(colors.outgoing)) {
+      const outTokens = buildBubbleNeomorphicTokens(colors.outgoing, isLight);
       root.style.setProperty('--bubble-outgoing-bg', outTokens.bg);
       root.style.setProperty('--bubble-outgoing-text', outTokens.text);
       root.style.setProperty('--bubble-outgoing-border', outTokens.border);
@@ -1055,19 +1224,17 @@
       root.style.removeProperty('--bubble-outgoing-shadow');
     }
 
-    if (isValidHexColor(colorsObj.surface)) {
-      root.style.setProperty('--widget-surface-bg', colorsObj.surface);
-      root.style.setProperty('--widget-surface-hover', adjustHexColor(colorsObj.surface, isLight ? 8 : 10));
+    if (isValidHexColor(colors.surface)) {
+      root.style.setProperty('--widget-surface-bg', colors.surface);
+      root.style.setProperty('--widget-surface-hover', adjustHexColor(colors.surface, isLight ? 8 : 10));
     } else {
       root.style.removeProperty('--widget-surface-bg');
       root.style.removeProperty('--widget-surface-hover');
     }
   }
 
-  function applyTheme(theme) {
-    const activeTheme = (theme === 'neomorphism-light' || theme === 'neomorphism' || theme === 'light')
-      ? 'neomorphism-light'
-      : 'neomorphism-dark';
+  function applyTheme(theme, customColorsOverride = null) {
+    const activeTheme = getThemeKey(theme);
     const rootEl = document.documentElement;
     rootEl.classList.add('theme-switching');
 
@@ -1093,7 +1260,7 @@
       }
     }
 
-    applyWidgetColors(state.widgetColors);
+    applyWidgetColors(customColorsOverride || getActiveWidgetColors(activeTheme), activeTheme);
 
     if (window.setCelestialTheme) {
       window.setCelestialTheme(activeTheme);
@@ -1260,6 +1427,25 @@
       clientToken: state.clientToken,
       userId: state.userId
     });
+
+    // Self-heal if a legacy /uploads/ avatar file vanished after server redeploy/restart
+    if (state.avatarUrl && state.avatarUrl.startsWith('/uploads/')) {
+      fetch(state.avatarUrl, { method: 'HEAD' }).then((res) => {
+        if (!res.ok) {
+          state.avatarUrl = '';
+          localStorage.setItem('wc_avatar_url', '');
+          updateHeaderProfile();
+          socket.emit('auth:guest_join', {
+            username: state.username,
+            color: state.color,
+            avatarUrl: null,
+            userIcon: state.userIcon,
+            clientToken: state.clientToken,
+            userId: state.userId
+          });
+        }
+      }).catch(() => {});
+    }
   });
 
   socket.on('world:version', (release) => {
@@ -1304,6 +1490,162 @@
       renderMessageReactions(msgEl, payload.reactions, true);
     }
   });
+
+  socket.on('chat:deleted', (payload) => {
+    if (!payload || !payload.messageId) return;
+    const msgEl = messagesList.querySelector(`[data-msg-id="${payload.messageId}"]`);
+    if (pendingDeleteMessageId === payload.messageId) {
+      closeDeleteConfirmModal();
+    }
+    if (state.replyTo && state.replyTo.id === payload.messageId) {
+      clearReply();
+    }
+    if (msgEl) {
+      msgEl.classList.add('removing');
+      setTimeout(() => {
+        if (msgEl.parentNode) msgEl.remove();
+        syncMessageGroupHeaders();
+      }, 190);
+    }
+  });
+
+  /*
+   * Caring Photo Upload Reminder & Owner-Only Delete Confirmation Controls
+   * Displays gentle, non-alarming reminders when chat or profile photos exceed
+   * limits, manages delete confirmations, and promotes orphaned grouped bubbles.
+   */
+  function closePhotoReminderModal() {
+    if (!photoReminderModal || photoReminderModal.classList.contains('hidden')) return;
+    SoundFX.modalClose();
+    photoReminderModal.classList.add('hidden');
+  }
+
+  function showPhotoLimitReminder(kind, options = {}) {
+    const targetLabel = options.target === 'profile' ? 'profile photo' : 'chat photo';
+    let heading = 'A Gentle Photo Reminder';
+    let message = '';
+    let tip = 'Friendly tip: Choose JPG, PNG, WEBP, or GIF up to 5 MB for the smoothest upload.';
+
+    if (kind === 'size') {
+      const sizeMb = options.sizeBytes ? (options.sizeBytes / (1024 * 1024)).toFixed(2) : 'over 5';
+      heading = options.target === 'profile' ? 'Gentle Profile Photo Reminder' : 'A Gentle Photo Reminder';
+      message = `Your chosen ${targetLabel} is about ${sizeMb} MB, which is just a little over our caring 5 MB limit. Picking a slightly lighter photo will help it ${options.target === 'profile' ? 'stay crisp and load fast on your profile' : 'upload and share smoothly for everyone'}!`;
+      tip = 'Quick idea: A compressed copy or screenshot under 5 MB works wonderfully.';
+    } else if (kind === 'type') {
+      heading = 'Friendly Format Reminder';
+      message = `We couldn't quite open that file as a ${targetLabel} yet. Whenever you're ready, please choose a JPG, PNG, WEBP, or GIF photo — we'd love to help share it!`;
+    } else if (kind === 'cooldown') {
+      heading = 'Take a Little Breather';
+      message = options.message || `You're sharing wonderfully! Please wait just a few seconds before uploading another ${targetLabel}.`;
+      tip = 'This brief pause helps keep World Chat responsive and calm for everyone.';
+    } else {
+      heading = 'Friendly Photo Check';
+      message = options.message || `Something about that ${targetLabel} looks slightly incomplete or above our 5 MB limit — choosing another copy should work right away!`;
+    }
+
+    if (photoReminderModal && photoReminderMessage) {
+      if (photoReminderHeading) photoReminderHeading.textContent = heading;
+      photoReminderMessage.textContent = message;
+      if (photoReminderTip) photoReminderTip.textContent = tip;
+      SoundFX.modalOpen();
+      photoReminderModal.classList.remove('hidden');
+    } else {
+      showToast(message, 'warning', 4500);
+    }
+  }
+
+  if (closePhotoReminderBtn) closePhotoReminderBtn.addEventListener('click', closePhotoReminderModal);
+  if (closeReminderOkBtn) closeReminderOkBtn.addEventListener('click', closePhotoReminderModal);
+  if (photoReminderModal) {
+    photoReminderModal.addEventListener('click', (e) => {
+      if (e.target === photoReminderModal) closePhotoReminderModal();
+    });
+  }
+
+  function openDeleteConfirmModal(msg) {
+    if (!msg || !msg.id) return;
+    pendingDeleteMessageId = msg.id;
+    if (deleteConfirmPreview) {
+      const rawText = (msg.text || '').trim();
+      const snippet = rawText
+        ? (rawText.length > 90 ? rawText.substring(0, 90) + '...' : rawText)
+        : (msg.imageUrl ? '[Photo message]' : 'Message');
+      deleteConfirmPreview.textContent = snippet;
+    }
+    if (deleteConfirmModal) {
+      SoundFX.modalOpen();
+      deleteConfirmModal.classList.remove('hidden');
+    } else {
+      socket.emit('chat:delete', { messageId: msg.id });
+    }
+  }
+
+  function closeDeleteConfirmModal() {
+    pendingDeleteMessageId = null;
+    if (!deleteConfirmModal || deleteConfirmModal.classList.contains('hidden')) return;
+    SoundFX.modalClose();
+    deleteConfirmModal.classList.add('hidden');
+  }
+
+  if (closeDeleteModalBtn) closeDeleteModalBtn.addEventListener('click', closeDeleteConfirmModal);
+  if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteConfirmModal);
+  if (deleteConfirmModal) {
+    deleteConfirmModal.addEventListener('click', (e) => {
+      if (e.target === deleteConfirmModal) closeDeleteConfirmModal();
+    });
+  }
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener('click', () => {
+      const targetId = pendingDeleteMessageId;
+      if (!targetId) return;
+      SoundFX.click();
+      socket.emit('chat:delete', { messageId: targetId });
+      closeDeleteConfirmModal();
+    });
+  }
+
+  function syncMessageGroupHeaders() {
+    const items = Array.from(messagesList.children);
+    for (let i = 0; i < items.length; i++) {
+      const el = items[i];
+      const msg = el._msgData;
+      if (!msg) continue;
+      const prevEl = i > 0 ? items[i - 1] : null;
+      const nextEl = i < items.length - 1 ? items[i + 1] : null;
+      const senderId = el.dataset.senderId || 'guest';
+      const shouldBeConsecutive = Boolean(prevEl && prevEl.dataset.senderId === senderId && !msg.replyTo);
+      const nextFollows = Boolean(nextEl && nextEl.dataset.senderId === senderId && !(nextEl._msgData && nextEl._msgData.replyTo));
+
+      el.classList.toggle('has-following', nextFollows);
+
+      if (!shouldBeConsecutive && el.classList.contains('consecutive-item')) {
+        el.classList.remove('consecutive-item');
+        if (!el.querySelector('.msg-author-external')) {
+          const authorDiv = document.createElement('div');
+          authorDiv.className = 'msg-author-external';
+          authorDiv.style.color = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#38bdf8';
+          authorDiv.textContent = msg.username || 'Guest';
+          el.insertBefore(authorDiv, el.firstChild);
+        }
+        const spacer = el.querySelector('.msg-bubble-avatar-spacer');
+        if (spacer) {
+          const safeAvatarUrl = sanitizeAvatarUrl(msg.avatarUrl);
+          const safeColor = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#38bdf8';
+          const slot = document.createElement('div');
+          slot.className = 'msg-bubble-avatar-slot';
+          slot.innerHTML = buildBubbleAvatarHtml(safeAvatarUrl, msg.username, safeColor, resolveUserIcon(msg.userIcon, senderId));
+          const promotedAvatarEl = slot.querySelector('.msg-bubble-avatar');
+          const promotedImg = promotedAvatarEl && promotedAvatarEl.querySelector('.msg-bubble-avatar-img');
+          if (promotedAvatarEl && promotedImg) {
+            promotedImg.addEventListener('error', () => {
+              applyBubbleAvatarVisual(promotedAvatarEl, '', msg.username, safeColor, resolveUserIcon(msg.userIcon, senderId));
+            }, { once: true });
+          }
+          spacer.replaceWith(slot);
+        }
+      }
+    }
+  }
 
   socket.on('typing:update', (data) => {
     const typers = (data.typingUsers || []).filter(name => name !== state.username);
@@ -1446,9 +1788,7 @@
     const safeAuthorColor = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#38bdf8';
 
     // Render author name above the bubble column and pair profile photo + distinguished icon on the left side of the bubble
-    const safeAvatarUrl = (typeof msg.avatarUrl === 'string' && /^\/uploads\/[a-zA-Z0-9_.-]+\.(webp|gif|png|jpg|jpeg)$/.test(msg.avatarUrl.trim()))
-      ? msg.avatarUrl.trim()
-      : '';
+    const safeAvatarUrl = sanitizeAvatarUrl(msg.avatarUrl);
     const safeUserIcon = resolveUserIcon(msg.userIcon, senderId);
     const authorHtml = !isConsecutive
       ? `<div class="msg-author-external" style="color: ${safeAuthorColor}">${safeAuthorName}</div>`
@@ -1504,7 +1844,12 @@
       `;
     }
 
-    // Floating cloud bubble with left avatar/distinguished icon, reactions row, external timestamp, react & reply buttons
+    // Floating cloud bubble with left avatar/distinguished icon, reactions row, external timestamp, react, reply & owner delete buttons
+    item._msgData = msg;
+    const deleteBtnHtml = (isOwn && msg.id)
+      ? `<button type="button" class="msg-delete-btn" title="Delete message" aria-label="Delete message"><span>${Icons.trash}</span></button>`
+      : '';
+
     item.innerHTML = `
       ${authorHtml}
       <div class="msg-bubble-row">
@@ -1524,11 +1869,21 @@
         <button type="button" class="msg-reply-btn" title="Reply to this message" aria-label="Reply">
           <span class="reply-btn-icon">${Icons.reply}</span>
         </button>
+        ${deleteBtnHtml}
       </div>
     `;
 
     // Populate any existing reactions from history
     renderMessageReactions(item, msg.reactions || {});
+
+    // Automatically fall back broken left bubble avatar images to the user's colored distinguished icon
+    const bubbleAvatarEl = item.querySelector('.msg-bubble-avatar');
+    const bubbleAvatarImg = bubbleAvatarEl && bubbleAvatarEl.querySelector('.msg-bubble-avatar-img');
+    if (bubbleAvatarEl && bubbleAvatarImg) {
+      bubbleAvatarImg.addEventListener('error', () => {
+        applyBubbleAvatarVisual(bubbleAvatarEl, '', msg.username, safeAuthorColor, safeUserIcon);
+      }, { once: true });
+    }
 
     // Click handler for react button (opens animated picker above/beside bubble)
     const reactBtn = item.querySelector('.msg-react-btn');
@@ -1569,6 +1924,15 @@
       replyBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         startReply(msg);
+      });
+    }
+
+    // Click handler for owner-only delete button
+    const deleteBtn = item.querySelector('.msg-delete-btn');
+    if (deleteBtn && isOwn) {
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDeleteConfirmModal(msg);
       });
     }
 
@@ -1715,28 +2079,42 @@
   chatViewport.addEventListener('drop', (e) => {
     if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (file.type.startsWith('image/')) {
+      if (isFlexibleImageFile(file)) {
         handleSelectedFile(file);
       } else {
-        showToast('Please drop an image file (JPG, PNG, WEBP, GIF)', 'error');
+        showPhotoLimitReminder('type', { target: 'chat' });
       }
     }
   });
 
-  function handleSelectedFile(file) {
-    // 5 MB limit check
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('Photo is too large! Maximum allowed size is 5 MB.', 'error');
+  async function handleSelectedFile(file) {
+    if (!isFlexibleImageFile(file)) {
+      showPhotoLimitReminder('type', { target: 'chat' });
       fileInput.value = '';
       return;
     }
 
-    state.stagedFile = file;
-    state.stagedFileUrl = URL.createObjectURL(file);
+    let preparedFile = file;
+    if (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes((file.type || '').toLowerCase())) {
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Optimizing your photo so it fits under 5 MB smoothly...', 'info', 2500);
+      }
+      preparedFile = await compressImageFileIfNeeded(file, { target: 'chat', maxBytes: 4.5 * 1024 * 1024 });
+    }
+
+    // Reject only if even compressed/raw file still exceeds 20 MB server ceiling
+    if (preparedFile.size > 20 * 1024 * 1024) {
+      showPhotoLimitReminder('size', { target: 'chat', sizeBytes: preparedFile.size });
+      fileInput.value = '';
+      return;
+    }
+
+    state.stagedFile = preparedFile;
+    state.stagedFileUrl = URL.createObjectURL(preparedFile);
 
     previewImage.src = state.stagedFileUrl;
-    previewFilename.innerText = file.name;
-    previewFilesize.innerText = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+    previewFilename.innerText = preparedFile.name;
+    previewFilesize.innerText = (preparedFile.size / (1024 * 1024)).toFixed(2) + ' MB';
     SoundFX.attach();
     attachmentBar.classList.remove('hidden');
     messageInput.focus();
@@ -1884,12 +2262,18 @@
 
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.error || 'Failed to upload photo.');
+          const err = new Error(data.error || 'We could not share that photo right now.');
+          err.status = res.status;
+          err.code = data.code || '';
+          throw err;
         }
 
         uploadedImageUrl = data.imageUrl;
       } catch (uploadErr) {
-        showToast(uploadErr.message, 'error');
+        const reminderKind = (uploadErr.status === 429 || uploadErr.code === 'COOLDOWN')
+          ? 'cooldown'
+          : (uploadErr.code === 'LIMIT_FILE_SIZE' ? 'size' : (uploadErr.code === 'INVALID_FILE_TYPE' ? 'type' : 'server'));
+        showPhotoLimitReminder(reminderKind, { target: 'chat', message: uploadErr.message });
         state.isUploading = false;
         sendBtn.disabled = false;
         sendBtn.innerHTML = sendBtnIconHtml;
@@ -2306,12 +2690,30 @@
     });
   }
 
+  function getModalEditingColors() {
+    return modalWidgetColorsByTheme[modalEditingTheme] || { ...EMPTY_WIDGET_COLORS };
+  }
+
   function updateWidgetControlsUI() {
-    const isLight = state.theme === 'neomorphism-light';
+    const isLight = getThemeKey(modalEditingTheme) === 'neomorphism-light';
+    const currentColors = getModalEditingColors();
     const incomingList = isLight ? WIDGET_SWATCHES.incomingLight : WIDGET_SWATCHES.incomingDark;
     const outgoingList = isLight ? WIDGET_SWATCHES.outgoingLight : WIDGET_SWATCHES.outgoingDark;
     const surfaceList = isLight ? WIDGET_SWATCHES.surfaceLight : WIDGET_SWATCHES.surfaceDark;
     const backdropList = isLight ? WIDGET_SWATCHES.backdropLight : WIDGET_SWATCHES.backdropDark;
+
+    if (widgetTargetDarkBtn) widgetTargetDarkBtn.classList.toggle('active', !isLight);
+    if (widgetTargetLightBtn) widgetTargetLightBtn.classList.toggle('active', isLight);
+    if (widgetTargetThemeNote) {
+      widgetTargetThemeNote.innerText = isLight
+        ? 'Customizing Serene Light only — Midnight Dark keeps its own colors.'
+        : 'Customizing Midnight Dark only — Serene Light keeps its own colors.';
+    }
+    if (resetWidgetsBtn) {
+      resetWidgetsBtn.innerText = isLight
+        ? 'Reset Serene Light Widgets to Defaults'
+        : 'Reset Midnight Dark Widgets to Defaults';
+    }
 
     const defaultAccent = isLight ? '#2563eb' : '#38bdf8';
     const defaultIncoming = isLight ? '#f4f7fb' : '#253042';
@@ -2319,36 +2721,36 @@
     const defaultSurface = isLight ? '#eef3fa' : '#212b3c';
     const defaultBackdrop = isLight ? '#e7edf5' : '#1a2230';
 
-    if (widgetAccentPicker) widgetAccentPicker.value = isValidHexColor(modalWidgetColors.accent) ? modalWidgetColors.accent : defaultAccent;
-    if (widgetIncomingPicker) widgetIncomingPicker.value = isValidHexColor(modalWidgetColors.incoming) ? modalWidgetColors.incoming : defaultIncoming;
-    if (widgetOutgoingPicker) widgetOutgoingPicker.value = isValidHexColor(modalWidgetColors.outgoing) ? modalWidgetColors.outgoing : defaultOutgoing;
-    if (widgetSurfacePicker) widgetSurfacePicker.value = isValidHexColor(modalWidgetColors.surface) ? modalWidgetColors.surface : defaultSurface;
-    if (widgetBackdropPicker) widgetBackdropPicker.value = isValidHexColor(modalWidgetColors.backdrop) ? modalWidgetColors.backdrop : defaultBackdrop;
+    if (widgetAccentPicker) widgetAccentPicker.value = isValidHexColor(currentColors.accent) ? currentColors.accent : defaultAccent;
+    if (widgetIncomingPicker) widgetIncomingPicker.value = isValidHexColor(currentColors.incoming) ? currentColors.incoming : defaultIncoming;
+    if (widgetOutgoingPicker) widgetOutgoingPicker.value = isValidHexColor(currentColors.outgoing) ? currentColors.outgoing : defaultOutgoing;
+    if (widgetSurfacePicker) widgetSurfacePicker.value = isValidHexColor(currentColors.surface) ? currentColors.surface : defaultSurface;
+    if (widgetBackdropPicker) widgetBackdropPicker.value = isValidHexColor(currentColors.backdrop) ? currentColors.backdrop : defaultBackdrop;
 
-    renderWidgetSwatches(widgetAccentSwatches, WIDGET_SWATCHES.accent, modalWidgetColors.accent, (hex) => {
-      modalWidgetColors.accent = hex;
+    renderWidgetSwatches(widgetAccentSwatches, WIDGET_SWATCHES.accent, currentColors.accent, (hex) => {
+      currentColors.accent = hex;
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
+      applyWidgetColors(currentColors, modalEditingTheme);
     });
-    renderWidgetSwatches(widgetIncomingSwatches, incomingList, modalWidgetColors.incoming, (hex) => {
-      modalWidgetColors.incoming = hex;
+    renderWidgetSwatches(widgetIncomingSwatches, incomingList, currentColors.incoming, (hex) => {
+      currentColors.incoming = hex;
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
+      applyWidgetColors(currentColors, modalEditingTheme);
     });
-    renderWidgetSwatches(widgetOutgoingSwatches, outgoingList, modalWidgetColors.outgoing, (hex) => {
-      modalWidgetColors.outgoing = hex;
+    renderWidgetSwatches(widgetOutgoingSwatches, outgoingList, currentColors.outgoing, (hex) => {
+      currentColors.outgoing = hex;
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
+      applyWidgetColors(currentColors, modalEditingTheme);
     });
-    renderWidgetSwatches(widgetSurfaceSwatches, surfaceList, modalWidgetColors.surface, (hex) => {
-      modalWidgetColors.surface = hex;
+    renderWidgetSwatches(widgetSurfaceSwatches, surfaceList, currentColors.surface, (hex) => {
+      currentColors.surface = hex;
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
+      applyWidgetColors(currentColors, modalEditingTheme);
     });
-    renderWidgetSwatches(widgetBackdropSwatches, backdropList, modalWidgetColors.backdrop, (hex) => {
-      modalWidgetColors.backdrop = hex;
+    renderWidgetSwatches(widgetBackdropSwatches, backdropList, currentColors.backdrop, (hex) => {
+      currentColors.backdrop = hex;
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
+      applyWidgetColors(currentColors, modalEditingTheme);
     });
 
     // Clear inline overrides so live preview bubbles reflect CSS neomorphic tokens 1:1
@@ -2389,7 +2791,9 @@
     customNameInput.value = state.username;
     modalSelectedColor = state.color;
     modalSelectedIcon = resolveUserIcon(state.userIcon, state.userId || state.username);
-    modalWidgetColors = { ...state.widgetColors };
+    modalInitialTheme = getThemeKey(state.theme);
+    modalEditingTheme = modalInitialTheme;
+    modalWidgetColorsByTheme = cloneWidgetMap(state.widgetColorsByTheme);
     clearStagedAvatarPreview();
     modalEffectiveAvatarUrl = state.avatarUrl || '';
     renderColorPalette();
@@ -2406,23 +2810,31 @@
       profilePhotoInput.click();
     });
 
-    profilePhotoInput.addEventListener('change', (e) => {
+    profilePhotoInput.addEventListener('change', async (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-      if (!allowedTypes.includes(file.type)) {
-        showToast('Invalid file type. Choose JPG, PNG, WEBP, or GIF.', 'error');
+      if (!isFlexibleImageFile(file)) {
+        showPhotoLimitReminder('type', { target: 'profile' });
         profilePhotoInput.value = '';
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('Profile photo exceeds 5MB size limit.', 'error');
+
+      let preparedFile = file;
+      if (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes((file.type || '').toLowerCase())) {
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Resizing your profile photo cleanly so everyone can see it...', 'info', 2500);
+        }
+        preparedFile = await compressImageFileIfNeeded(file, { target: 'profile', maxBytes: 450 * 1024 });
+      }
+
+      if (preparedFile.size > 20 * 1024 * 1024) {
+        showPhotoLimitReminder('size', { target: 'profile', sizeBytes: preparedFile.size });
         profilePhotoInput.value = '';
         return;
       }
       clearStagedAvatarPreview();
-      modalStagedAvatarFile = file;
-      modalStagedAvatarPreview = URL.createObjectURL(file);
+      modalStagedAvatarFile = preparedFile;
+      modalStagedAvatarPreview = URL.createObjectURL(preparedFile);
       modalEffectiveAvatarUrl = modalStagedAvatarPreview;
       SoundFX.attach();
       updateModalPreview();
@@ -2449,56 +2861,82 @@
   if (tabIdentityBtn) tabIdentityBtn.addEventListener('click', () => { SoundFX.click(); switchModalTab('identity'); });
   if (tabWidgetsBtn) tabWidgetsBtn.addEventListener('click', () => { SoundFX.click(); switchModalTab('widgets'); });
 
+  function switchWidgetTargetTheme(targetTheme) {
+    const nextKey = getThemeKey(targetTheme);
+    if (nextKey === modalEditingTheme) return;
+    SoundFX.themeSwitch();
+    modalEditingTheme = nextKey;
+    applyTheme(modalEditingTheme, getModalEditingColors());
+    updateWidgetControlsUI();
+  }
+
+  if (widgetTargetDarkBtn) {
+    widgetTargetDarkBtn.addEventListener('click', () => switchWidgetTargetTheme('neomorphism-dark'));
+  }
+  if (widgetTargetLightBtn) {
+    widgetTargetLightBtn.addEventListener('click', () => switchWidgetTargetTheme('neomorphism-light'));
+  }
+
   if (widgetAccentPicker) {
     widgetAccentPicker.addEventListener('input', (e) => {
-      modalWidgetColors.accent = e.target.value;
+      const target = getModalEditingColors();
+      target.accent = e.target.value;
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
+      applyWidgetColors(target, modalEditingTheme);
     });
   }
   if (widgetIncomingPicker) {
     widgetIncomingPicker.addEventListener('input', (e) => {
-      modalWidgetColors.incoming = e.target.value;
+      const target = getModalEditingColors();
+      target.incoming = e.target.value;
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
+      applyWidgetColors(target, modalEditingTheme);
     });
   }
   if (widgetOutgoingPicker) {
     widgetOutgoingPicker.addEventListener('input', (e) => {
-      modalWidgetColors.outgoing = e.target.value;
+      const target = getModalEditingColors();
+      target.outgoing = e.target.value;
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
+      applyWidgetColors(target, modalEditingTheme);
     });
   }
   if (widgetSurfacePicker) {
     widgetSurfacePicker.addEventListener('input', (e) => {
-      modalWidgetColors.surface = e.target.value;
+      const target = getModalEditingColors();
+      target.surface = e.target.value;
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
+      applyWidgetColors(target, modalEditingTheme);
     });
   }
   if (widgetBackdropPicker) {
     widgetBackdropPicker.addEventListener('input', (e) => {
-      modalWidgetColors.backdrop = e.target.value;
+      const target = getModalEditingColors();
+      target.backdrop = e.target.value;
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
+      applyWidgetColors(target, modalEditingTheme);
     });
   }
 
   if (resetWidgetsBtn) {
     resetWidgetsBtn.addEventListener('click', () => {
       SoundFX.click();
-      modalWidgetColors = { accent: '', incoming: '', outgoing: '', surface: '', backdrop: '' };
+      modalWidgetColorsByTheme[modalEditingTheme] = { ...EMPTY_WIDGET_COLORS };
       updateWidgetControlsUI();
-      applyWidgetColors(modalWidgetColors);
-      showToast('Color widgets reset to calm defaults (click Save to keep)', 'info');
+      applyWidgetColors(getModalEditingColors(), modalEditingTheme);
+      const label = modalEditingTheme === 'neomorphism-light' ? 'Serene Light' : 'Midnight Dark';
+      showToast(`${label} widgets reset to defaults (click Save to keep)`, 'info');
     });
   }
 
   function closeAndRevertModalIfUnsaved() {
     SoundFX.modalClose();
     clearStagedAvatarPreview();
-    applyWidgetColors(state.widgetColors);
+    if (getThemeKey(state.theme) !== modalInitialTheme) {
+      applyTheme(modalInitialTheme, getActiveWidgetColors(modalInitialTheme));
+    } else {
+      applyWidgetColors(getActiveWidgetColors(state.theme), state.theme);
+    }
     profileModal.classList.add('hidden');
   }
 
@@ -2582,11 +3020,17 @@
         });
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.error || 'Failed to upload profile photo.');
+          const err = new Error(data.error || 'We could not update your profile photo right now.');
+          err.status = res.status;
+          err.code = data.code || '';
+          throw err;
         }
-        finalAvatarUrl = data.avatarUrl;
+        finalAvatarUrl = data.inlineAvatarUrl || data.avatarUrl;
       } catch (err) {
-        showToast(err.message, 'error');
+        const reminderKind = (err.status === 429 || err.code === 'COOLDOWN')
+          ? 'cooldown'
+          : (err.code === 'LIMIT_FILE_SIZE' ? 'size' : (err.code === 'INVALID_FILE_TYPE' ? 'type' : 'server'));
+        showPhotoLimitReminder(reminderKind, { target: 'profile', message: err.message });
         saveProfileBtn.disabled = false;
         saveProfileBtn.innerText = 'Save Changes';
         return;
@@ -2601,16 +3045,16 @@
     state.color = modalSelectedColor;
     state.userIcon = resolveUserIcon(modalSelectedIcon, state.userId || newName);
     state.avatarUrl = finalAvatarUrl || '';
-    state.widgetColors = { ...modalWidgetColors };
+    state.widgetColorsByTheme = cloneWidgetMap(modalWidgetColorsByTheme);
 
     localStorage.setItem('wc_username', state.username);
     localStorage.setItem('wc_color', state.color);
     localStorage.setItem('wc_user_icon', state.userIcon);
     localStorage.setItem('wc_avatar_url', state.avatarUrl);
-    localStorage.setItem('wc_widget_colors', JSON.stringify(state.widgetColors));
+    localStorage.setItem('wc_widget_colors', JSON.stringify(state.widgetColorsByTheme));
 
     updateHeaderProfile();
-    applyWidgetColors(state.widgetColors);
+    applyWidgetColors(getActiveWidgetColors(state.theme), state.theme);
     profileModal.classList.add('hidden');
 
     // Notify server of updated name, color, saved avatar photo, and distinguished icon
@@ -2655,13 +3099,19 @@
     if (e.key === 'Escape') {
       const profileWasOpen = !profileModal.classList.contains('hidden');
       const updateWasOpen = updateNoticeModal && !updateNoticeModal.classList.contains('hidden');
-      const modalOpen = !lightboxModal.classList.contains('hidden') || profileWasOpen || updateWasOpen;
+      const deleteWasOpen = deleteConfirmModal && !deleteConfirmModal.classList.contains('hidden');
+      const reminderWasOpen = photoReminderModal && !photoReminderModal.classList.contains('hidden');
+      const modalOpen = !lightboxModal.classList.contains('hidden') || profileWasOpen || updateWasOpen || deleteWasOpen || reminderWasOpen;
       if (modalOpen) {
         SoundFX.modalClose();
       }
       if (profileWasOpen) {
         clearStagedAvatarPreview();
-        applyWidgetColors(state.widgetColors);
+        if (getThemeKey(state.theme) !== modalInitialTheme) {
+          applyTheme(modalInitialTheme, getActiveWidgetColors(modalInitialTheme));
+        } else {
+          applyWidgetColors(getActiveWidgetColors(state.theme), state.theme);
+        }
       }
       if (beautifyPopover && !beautifyPopover.classList.contains('hidden')) {
         beautifyPopover.classList.add('hidden');
@@ -2674,6 +3124,11 @@
       lightboxModal.classList.add('hidden');
       profileModal.classList.add('hidden');
       if (updateNoticeModal) updateNoticeModal.classList.add('hidden');
+      if (deleteConfirmModal) {
+        deleteConfirmModal.classList.add('hidden');
+        pendingDeleteMessageId = null;
+      }
+      if (photoReminderModal) photoReminderModal.classList.add('hidden');
     }
   });
 })();

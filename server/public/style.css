@@ -1060,9 +1060,10 @@ body {
   flex-shrink: 0;
 }
 
-/* Reply Action Button beside External Timestamp */
+/* Reply, React & Owner-Only Delete Action Buttons beside External Timestamp */
 .msg-reply-btn,
-.msg-react-btn {
+.msg-react-btn,
+.msg-delete-btn {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-muted);
@@ -1085,10 +1086,13 @@ body {
 
 .message-item:hover .msg-reply-btn,
 .message-item:hover .msg-react-btn,
+.message-item:hover .msg-delete-btn,
 .msg-reply-btn:focus,
 .msg-reply-btn:active,
 .msg-react-btn:focus,
-.msg-react-btn.active {
+.msg-react-btn.active,
+.msg-delete-btn:focus,
+.msg-delete-btn:active {
   opacity: 1;
   transform: scale(1);
 }
@@ -1100,9 +1104,16 @@ body {
   box-shadow: 3px 3px 8px var(--neo-shadow-dark), -2px -2px 6px var(--neo-shadow-light);
 }
 
+.msg-delete-btn:hover {
+  color: #f87171;
+  background: var(--bg-hover);
+  box-shadow: 3px 3px 8px var(--neo-shadow-dark), -2px -2px 6px var(--neo-shadow-light);
+}
+
 @media (max-width: 768px), (hover: none) {
   .msg-reply-btn,
-  .msg-react-btn {
+  .msg-react-btn,
+  .msg-delete-btn {
     opacity: 0.72;
     transform: scale(1);
   }
@@ -2868,7 +2879,8 @@ body {
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-reply-btn,
-:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-react-btn {
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-react-btn,
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-delete-btn {
   background: var(--bg-card);
   border: 1px solid rgba(255, 255, 255, 0.92);
   color: #475569;
@@ -2879,6 +2891,11 @@ body {
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-react-btn:hover {
   background: var(--bg-hover);
   color: var(--accent-cyan);
+}
+
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .msg-delete-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .reply-preview-card {
@@ -3622,4 +3639,107 @@ body {
 
 .update-confirm-btn {
   flex: 1.5;
+}
+
+/*
+ * Per-Theme Color Widget Switcher, Delete Confirm Modal & Caring Photo Reminder
+ * Isolates theme-targeted widget controls visually and styles gentle, reassuring
+ * upload limit reminders alongside owner-only message deletion confirmations.
+ */
+.widget-theme-bar {
+  margin-bottom: 14px;
+}
+
+.widget-theme-pills {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: var(--bg-inset);
+  border-radius: 10px;
+  box-shadow: inset 2px 2px 5px var(--neo-inset-dark), inset -1px -1px 3px var(--neo-inset-light);
+  margin-bottom: 6px;
+}
+
+.widget-theme-pill {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 7px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.widget-theme-pill.active {
+  background: var(--bg-card);
+  color: var(--accent-cyan);
+  box-shadow: 3px 3px 7px var(--neo-shadow-dark), -2px -2px 5px var(--neo-shadow-light);
+}
+
+.delete-modal-box,
+.reminder-modal-box {
+  max-width: 410px;
+}
+
+.delete-preview-snippet {
+  background: var(--bg-inset);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  box-shadow: inset 2px 2px 5px var(--neo-inset-dark), inset -1px -1px 3px var(--neo-inset-light);
+  word-break: break-word;
+}
+
+.btn-danger-neo {
+  flex: 1.4;
+  height: 44px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 10px;
+  background: #dc2626;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 4px 4px 10px var(--neo-shadow-dark), -2px -2px 7px var(--neo-shadow-light);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-danger-neo:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.reminder-icon-pod {
+  width: 28px;
+  height: 28px;
+  color: var(--accent-calm);
+}
+
+.reminder-message-text {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-main);
+  margin-bottom: 14px;
+}
+
+.reminder-tip-pill {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-calm);
+  box-shadow: inset 2px 2px 5px var(--neo-inset-dark), inset -1px -1px 3px var(--neo-inset-light);
+}
+
+.message-item.removing {
+  opacity: 0;
+  transform: scale(0.96) translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }

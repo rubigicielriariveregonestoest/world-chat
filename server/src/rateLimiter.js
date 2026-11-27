@@ -34,7 +34,7 @@ setInterval(() => {
   for (const [key, entry] of lastUserMessages.entries()) {
     if (now - entry.time > 60000) lastUserMessages.delete(key);
   }
-}, 600000);
+}, 600000).unref();
 
 /*
  * Exported Cooldown & Anti-Spam Validators
@@ -73,7 +73,7 @@ module.exports = {
     const diff = now - last;
     if (diff < IMAGE_COOLDOWN_MS) {
       const waitSeconds = Math.ceil((IMAGE_COOLDOWN_MS - diff) / 1000);
-      return { allowed: false, waitSeconds, reason: `Photo cooldown: Please wait ${waitSeconds}s before sending another photo.` };
+      return { allowed: false, waitSeconds, reason: `You're sharing fast! Please take a quick ${waitSeconds}s breather before sending another photo.` };
     }
     return { allowed: true };
   },
@@ -88,7 +88,7 @@ module.exports = {
     const diff = now - last;
     if (diff < AVATAR_COOLDOWN_MS) {
       const waitSeconds = Math.ceil((AVATAR_COOLDOWN_MS - diff) / 1000);
-      return { allowed: false, waitSeconds, reason: `Please wait ${waitSeconds}s before changing your profile photo again.` };
+      return { allowed: false, waitSeconds, reason: `Just a gentle pause — please wait ${waitSeconds}s before updating your profile photo again.` };
     }
     return { allowed: true };
   },

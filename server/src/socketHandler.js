@@ -25,6 +25,11 @@ function sanitizeUploadUrl(url) {
   return /^\/uploads\/[a-zA-Z0-9_.-]+\.(webp|gif|png|jpg|jpeg)$/.test(trimmed) ? trimmed : null;
 }
 
+// Validates saved profile avatar URLs (server /uploads path or compact raster WebP/JPEG/PNG data URI)
+function sanitizeAvatarUrl(url) {
+  return db.sanitizeAvatarUrl(url);
+}
+
 const activeSockets = new Map(); // socket.id -> { userId, username, color, avatarUrl, userIcon, clientToken, ip }
 const typingUsers = new Map(); // clientToken -> { username, expiresAt }
 
@@ -109,7 +114,7 @@ module.exports = function registerSocketHandlers(io, releaseInfo = null) {
         ? String(data.color).trim()
         : '#38bdf8';
 
-      const avatarUrl = sanitizeUploadUrl(data.avatarUrl);
+      const avatarUrl = sanitizeAvatarUrl(data.avatarUrl);
       const userId = data.userId || 'usr_' + clientToken.substring(0, 8);
       const rawUserIcon = typeof data.userIcon === 'string' ? data.userIcon.trim() : '';
       const userIcon = db.ALLOWED_USER_ICONS.includes(rawUserIcon)
@@ -252,6 +257,27 @@ module.exports = function registerSocketHandlers(io, releaseInfo = null) {
       if (updated) {
         io.emit('chat:reaction_update', updated);
       }
+    });
+
+    // Handle owner-only message deletion
+    socket.on('chat:delete', (payload = {}) => {
+      const session = activeSockets.get(socket.id);
+      if (!session) {
+        return socket.emit('chat:error', { message: 'Session not initialized. Please refresh.' });
+      }
+
+      const messageId = typeof payload.messageId === 'string' ? payload.messageId.trim() : '';
+      if (!messageId) return;
+
+      const result = db.deleteMessage(messageId, session.userId);
+      if (!result.deleted) {
+        if (result.reason === 'forbidden') {
+          return socket.emit('chat:error', { message: 'You can only delete your own messages.' });
+        }
+        return socket.emit('chat:error', { message: 'That message could not be found or was already removed.' });
+      }
+
+      io.emit('chat:deleted', { messageId: result.messageId });
     });
 
     // Handle typing status

@@ -109,6 +109,18 @@ function normalizeReactions(raw) {
   return base;
 }
 
+function sanitizeAvatarUrl(rawUrl) {
+  if (typeof rawUrl !== 'string') return null;
+  const trimmed = rawUrl.trim();
+  if (/^\/uploads\/[a-zA-Z0-9_.-]+\.(webp|gif|png|jpg|jpeg)$/.test(trimmed)) {
+    return trimmed;
+  }
+  if (/^data:image\/(webp|jpeg|png);base64,[A-Za-z0-9+/=]{16,32000}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return null;
+}
+
 /*
  * Public Database API (Read, Append & Reaction Toggling)
  * Exposes history retrieval, reply lookup, sanitized message creation (including
@@ -119,11 +131,12 @@ module.exports = {
   ALLOWED_STYLE_VARIANTS,
   ALLOWED_USER_ICONS,
   pickDefaultUserIcon,
+  sanitizeAvatarUrl,
 
   getRecentMessages(limit = 100) {
     return messages.slice(-limit).map(m => ({
       ...m,
-      avatarUrl: m.avatarUrl || null,
+      avatarUrl: sanitizeAvatarUrl(m.avatarUrl),
       userIcon: normalizeUserIcon(m.userIcon, m.userId || m.username),
       styleVariant: ALLOWED_STYLE_VARIANTS.includes(m.styleVariant) ? m.styleVariant : 'default',
       reactions: normalizeReactions(m.reactions)
@@ -145,7 +158,7 @@ module.exports = {
       userId: msg.userId,
       username: msg.username,
       color: msg.color || '#38bdf8',
-      avatarUrl: msg.avatarUrl || null,
+      avatarUrl: sanitizeAvatarUrl(msg.avatarUrl),
       userIcon: normalizeUserIcon(msg.userIcon, msg.userId || msg.username),
       text: msg.text || '',
       imageUrl: msg.imageUrl || null,
@@ -188,6 +201,25 @@ module.exports = {
     return {
       messageId: target.id,
       reactions: target.reactions
+    };
+  },
+
+  deleteMessage(messageId, userId) {
+    if (!messageId || !userId) {
+      return { deleted: false, reason: 'invalid_request' };
+    }
+    const idx = messages.findIndex(m => m.id === messageId);
+    if (idx < 0) {
+      return { deleted: false, reason: 'not_found' };
+    }
+    if (messages[idx].userId !== userId) {
+      return { deleted: false, reason: 'forbidden' };
+    }
+    const [removed] = messages.splice(idx, 1);
+    schedulePersist();
+    return {
+      deleted: true,
+      messageId: removed.id
     };
   }
 };

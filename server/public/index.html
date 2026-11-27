@@ -265,7 +265,7 @@
     <footer class="app-footer">
       <form id="chat-form" class="chat-form">
         <!-- Hidden File Input -->
-        <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
+        <input type="file" id="file-input" accept="image/*,.heic,.heif,.avif,.bmp,.tiff,.tif,.jfif,.ico,.svg,.webp,.png,.jpg,.jpeg,.gif" style="display: none;">
 
         <!-- Detached Plus Button & Popover -->
         <div class="plus-wrapper">
@@ -479,12 +479,12 @@
             <div class="profile-photo-row">
               <div id="modal-photo-preview" class="user-avatar profile-photo-preview">?</div>
               <div class="profile-photo-actions">
-                <input type="file" id="profile-photo-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
+                <input type="file" id="profile-photo-input" accept="image/*,.heic,.heif,.avif,.bmp,.tiff,.tif,.jfif,.ico,.svg,.webp,.png,.jpg,.jpeg,.gif" style="display: none;">
                 <button type="button" id="choose-profile-photo-btn" class="profile-photo-btn">Choose Photo</button>
                 <button type="button" id="remove-profile-photo-btn" class="profile-photo-btn remove hidden">Remove</button>
               </div>
             </div>
-            <span class="input-hint">JPG, PNG, WEBP, or GIF from your saved files (max 5MB).</span>
+            <span class="input-hint">Supports JPG, PNG, WEBP, GIF, AVIF, BMP, TIFF &amp; more — photos over 5MB auto-resize automatically.</span>
           </div>
 
           <label for="custom-name-input" style="margin-top: 14px;">Display Name</label>
@@ -512,8 +512,16 @@
           </div>
         </div>
 
-        <!-- Tab 2: Color Widgets -->
+        <!-- Tab 2: Color Widgets (Per-Theme Isolated Customization) -->
         <div id="tab-widgets-panel" class="modal-tab-panel hidden">
+          <div class="widget-theme-bar">
+            <div class="widget-theme-pills" role="group" aria-label="Target theme for widget colors">
+              <button type="button" id="widget-target-dark-btn" class="widget-theme-pill active" data-target-theme="neomorphism-dark">Midnight Dark</button>
+              <button type="button" id="widget-target-light-btn" class="widget-theme-pill" data-target-theme="neomorphism-light">Serene Light</button>
+            </div>
+            <span id="widget-target-theme-note" class="input-hint">Customizing Midnight Dark only — Serene Light keeps its own settings.</span>
+          </div>
+
           <div class="widget-control-group">
             <div class="widget-control-head">
               <label for="widget-accent-picker">Widget Accent (Trust & Focus)</label>
@@ -567,6 +575,65 @@
       </div>
       <div class="modal-footer">
         <button id="save-profile-btn" class="primary-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    Owner-Only Message Delete Confirmation & Caring Photo Upload Reminder Modals
+    Provides accidental-tap protection before deleting the user's own chat
+    message and displays a warm, reassuring reminder if a photo exceeds limits.
+  -->
+  <div id="delete-confirm-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+    <div class="modal-card delete-modal-box">
+      <div class="modal-header">
+        <h3 id="delete-confirm-title">Delete Your Message?</h3>
+        <button type="button" id="close-delete-modal" class="close-btn" title="Close">
+          <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="update-notice-subtitle">
+          This will gently remove your message from the chat stream for everyone.
+        </p>
+        <div id="delete-confirm-preview" class="delete-preview-snippet">Message preview...</div>
+      </div>
+      <div class="modal-footer update-actions-row">
+        <button type="button" id="cancel-delete-btn" class="btn-secondary-neo">Keep</button>
+        <button type="button" id="confirm-delete-btn" class="btn-danger-neo">Delete Message</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="photo-reminder-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="photo-reminder-title">
+    <div class="modal-card reminder-modal-box">
+      <div class="modal-header">
+        <h3 id="photo-reminder-title">
+          <span class="neo-icon-pod reminder-icon-pod">
+            <svg class="neo-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          </span>
+          <span id="photo-reminder-heading">A Gentle Photo Reminder</span>
+        </h3>
+        <button type="button" id="close-photo-reminder" class="close-btn" title="Close">
+          <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="photo-reminder-message" class="reminder-message-text">
+          That photo is just a little over our size limit — picking a lighter image under 5 MB will help it share smoothly!
+        </p>
+        <div id="photo-reminder-tip" class="reminder-tip-pill">
+          Friendly tip: JPG, PNG, WEBP, or GIF up to 5 MB works best.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="close-reminder-ok-btn" class="primary-btn">Got it, thanks!</button>
       </div>
     </div>
   </div>
