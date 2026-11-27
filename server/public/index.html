@@ -10,8 +10,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="celestial-theme">
   <!-- Fullscreen Celestial Canvas (Twinkling Stars, Meteors, Shooting Stars) -->
@@ -69,16 +67,15 @@
               </div>
               <div class="dropdown-user-info">
                 <span id="dropdown-user-name" class="dropdown-username">Guest</span>
-                <span id="dropdown-user-handle" class="dropdown-user-handle">@unlinked</span>
-                <span id="dropdown-user-role" class="dropdown-user-role">Unlinked Guest</span>
+                <span class="dropdown-user-role">Anonymous Guest</span>
               </div>
-              <button type="button" id="edit-profile-btn" class="dropdown-edit-btn" title="Customize Profile">
+              <button type="button" id="edit-profile-btn" class="dropdown-edit-btn" title="Edit nickname & color">
                 <span class="neo-icon">
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                   </svg>
                 </span>
-                <span id="edit-profile-btn-text">Edit</span>
+                <span>Edit</span>
               </button>
             </div>
 
@@ -86,28 +83,6 @@
 
             <!-- Settings & Toggles -->
             <div class="dropdown-menu-list">
-              <!-- Admin Controls Button (Visible for Admins Only) -->
-              <button type="button" id="admin-controls-btn" class="dropdown-item-btn hidden" title="Admin Control Center">
-                <span class="dropdown-item-icon neo-icon-pod" id="admin-icon" style="color: #fbbf24;">
-                  <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-1h14v1z"/>
-                  </svg>
-                </span>
-                <span class="dropdown-item-label">Admin Controls</span>
-                <span class="dropdown-item-badge admin-badge-mini" style="color: #fbbf24;">Admin</span>
-              </button>
-
-              <!-- Link Gmail Account Button -->
-              <button type="button" id="link-account-item-btn" class="dropdown-item-btn" title="Link your Google Account">
-                <span class="dropdown-item-icon neo-icon-pod" style="color: #f59e0b;">
-                  <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-                  </svg>
-                </span>
-                <span class="dropdown-item-label" id="link-account-item-label">Link Gmail</span>
-                <span class="dropdown-item-badge" id="link-account-item-badge">Required</span>
-              </button>
-
               <!-- Safe Mode Toggle -->
               <button type="button" id="toggle-blur-btn" class="dropdown-item-btn" title="Toggle Blur on Photos (Safe for Work)">
                 <span class="dropdown-item-icon neo-icon-pod" id="safe-mode-icon">
@@ -134,22 +109,11 @@
               <button type="button" id="theme-btn" class="dropdown-item-btn" title="Switch Theme (Neomorphism Dark / Light)">
                 <span class="dropdown-item-icon neo-icon-pod" id="theme-icon">
                   <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                    <path d="M12.3 2a10 10 0 0 0-1.9 19.8 10 10 0 0 1-9.6-8.3z"/>
+                    <path d="M12.3 2a10 10 0 0 0-1.9 19.8 10 10 0 0 0 11.5-11.5 10 10 0 0 1-9.6-8.3z"/>
                   </svg>
                 </span>
                 <span class="dropdown-item-label">Theme</span>
                 <span class="dropdown-item-badge" id="theme-badge">Dark</span>
-              </button>
-
-              <!-- Sign Out / Unlink Button (Hidden when unlinked) -->
-              <button type="button" id="logout-item-btn" class="dropdown-item-btn hidden" title="Unlink / Sign Out">
-                <span class="dropdown-item-icon neo-icon-pod" style="color: #f87171;">
-                  <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-                  </svg>
-                </span>
-                <span class="dropdown-item-label">Sign Out</span>
-                <span class="dropdown-item-badge">Unlink</span>
               </button>
             </div>
           </div>
@@ -368,56 +332,6 @@
     </div>
   </div>
 
-  <!-- Link Gmail Account Modal -->
-  <div id="link-account-modal" class="modal-overlay hidden">
-    <div class="modal-card auth-modal-box">
-      <div class="modal-header">
-        <h3>
-          <span class="neo-icon-pod" style="width: 26px; height: 26px; color: #f59e0b;">
-            <svg class="neo-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5z"/>
-            </svg>
-          </span>
-          <span>Link Google Account</span>
-        </h3>
-        <button id="close-link-modal" class="close-btn" title="Close">
-          <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p class="auth-modal-desc">
-          Link your <strong>@gmail.com</strong> account to unlock messaging, photo attachments, and your unique username.
-        </p>
-
-        <!-- Google One-Tap / Button Container -->
-        <div id="google-btn-wrapper" class="google-btn-wrapper">
-          <div id="g-id-signin-btn"></div>
-        </div>
-
-        <div class="auth-divider">
-          <span>OR QUICK LINK GMAIL</span>
-        </div>
-
-        <!-- Direct / Developer Gmail Link Form -->
-        <form id="dev-link-form" class="dev-link-form">
-          <label for="dev-email-input">Gmail Address (@gmail.com only)</label>
-          <input 
-            type="email" 
-            id="dev-email-input" 
-            placeholder="yourname@gmail.com" 
-            autocomplete="email" 
-            required
-          />
-          <button type="submit" id="dev-link-submit-btn" class="primary-btn" style="margin-top: 12px;">
-            Link Account
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-
   <!-- Profile Customization Modal -->
   <div id="profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
@@ -430,36 +344,13 @@
         </button>
       </div>
       <div class="modal-body">
-        <!-- Linked Account Details -->
-        <div class="profile-meta-card">
-          <div class="meta-row">
-            <span class="meta-label">Linked Gmail:</span>
-            <span id="profile-linked-email" class="meta-val">None</span>
-          </div>
-          <div class="meta-row">
-            <span class="meta-label">Role:</span>
-            <span id="profile-role-badge" class="meta-val meta-badge">Member</span>
-          </div>
-        </div>
+        <label for="custom-name-input">Display Name</label>
+        <input type="text" id="custom-name-input" maxlength="24" placeholder="Enter your nickname...">
+        <span class="input-hint">Max 24 characters. Stored in your browser.</span>
 
-        <!-- Display Name (Flexible) -->
-        <label for="custom-name-input" style="margin-top: 14px;">Display Name</label>
-        <input type="text" id="custom-name-input" maxlength="24" placeholder="Enter your display name...">
-        <span class="input-hint">Flexible name (can be changed anytime, duplicates allowed).</span>
-
-        <!-- Unique Username Handle -->
-        <label for="custom-username-input" style="margin-top: 14px;">Unique Username</label>
-        <div class="username-input-wrap">
-          <span class="username-prefix">@</span>
-          <input type="text" id="custom-username-input" maxlength="20" placeholder="username" autocomplete="off">
-        </div>
-        <div id="username-status-badge" class="username-status-badge">Enter a 3-20 character username</div>
-
-        <!-- Avatar Accent Color -->
         <label style="margin-top: 16px;">Avatar Accent Color</label>
         <div id="color-palette" class="color-palette"></div>
 
-        <!-- Preview Section -->
         <div class="preview-section">
           <label>Chat Preview</label>
           <div class="preview-message-box">
@@ -467,7 +358,6 @@
             <div>
               <div class="preview-header">
                 <span id="modal-preview-name" class="user-name">Guest</span>
-                <span id="modal-preview-handle" class="user-handle" style="font-size: 0.78rem; opacity: 0.7; margin-left: 4px;">@guest</span>
                 <span class="msg-time">Just now</span>
               </div>
               <div class="preview-text">Hello World! This is how your chat appears.</div>
@@ -477,46 +367,6 @@
       </div>
       <div class="modal-footer">
         <button id="save-profile-btn" class="primary-btn">Save Changes</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Admin Control Center Modal -->
-  <div id="admin-modal" class="modal-overlay hidden">
-    <div class="modal-card admin-modal-box">
-      <div class="modal-header">
-        <h3>
-          <span class="neo-icon-pod" style="width: 26px; height: 26px; color: #fbbf24;">
-            <svg class="neo-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-              <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-1h14v1z"/>
-            </svg>
-          </span>
-          <span>Admin Control Center</span>
-        </h3>
-        <button id="close-admin-modal" class="close-btn" title="Close">
-          <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p class="admin-modal-desc">
-          You are signed in as an <strong>Administrator</strong>. You have exclusive moderation privileges over all messages and members.
-        </p>
-
-        <div class="admin-action-section">
-          <label>Global Chat Moderation</label>
-          <button type="button" id="admin-clear-chat-btn" class="danger-btn">
-            <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-            </svg>
-            <span>Purge All Chat Messages</span>
-          </button>
-          <span class="input-hint" style="color: #f87171;">Warning: This irreversibly removes all messages from the live room.</span>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="admin-close-action-btn" class="primary-btn">Done</button>
       </div>
     </div>
   </div>

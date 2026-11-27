@@ -517,12 +517,6 @@
 
   // --- Application State ---
   const state = {
-    authToken: localStorage.getItem('wc_auth_token') || null,
-    user: null,
-    isAuthenticated: false,
-    isAdmin: false,
-    googleClientId: null,
-    displayName: localStorage.getItem('wc_display_name') || localStorage.getItem('wc_username') || '',
     username: localStorage.getItem('wc_username') || '',
     color: localStorage.getItem('wc_color') || '',
     clientToken: localStorage.getItem('wc_token') || '',
@@ -544,10 +538,17 @@
     lastTypingSent: 0
   };
 
-  // Initialize guest client token if not stored
-  if (!state.clientToken) {
-    state.clientToken = 'client_' + Math.random().toString(36).substring(2, 10);
+  // Initialize guest profile if not stored
+  if (!state.clientToken || !state.username) {
+    const generated = generateRandomIdentity();
+    state.username = generated.username;
+    state.color = generated.color;
+    state.clientToken = generated.clientToken;
+    state.userId = generated.userId;
+    localStorage.setItem('wc_username', state.username);
+    localStorage.setItem('wc_color', state.color);
     localStorage.setItem('wc_token', state.clientToken);
+    localStorage.setItem('wc_userId', state.userId);
   }
 
   // --- Neomorphic Volumetric Icons Registry ---
@@ -628,27 +629,6 @@
   const saveProfileBtn = document.getElementById('save-profile-btn');
   const modalPreviewAvatar = document.getElementById('modal-preview-avatar');
   const modalPreviewName = document.getElementById('modal-preview-name');
-  const modalPreviewHandle = document.getElementById('modal-preview-handle');
-
-  const appFooter = document.querySelector('.app-footer');
-  const linkAccountModal = document.getElementById('link-account-modal');
-  const closeLinkModalBtn = document.getElementById('close-link-modal');
-  const linkAccountItemBtn = document.getElementById('link-account-item-btn');
-  const dropdownUserHandle = document.getElementById('dropdown-user-handle');
-  const dropdownUserRole = document.getElementById('dropdown-user-role');
-  const editProfileBtnText = document.getElementById('edit-profile-btn-text');
-  const logoutItemBtn = document.getElementById('logout-item-btn');
-  const adminControlsBtn = document.getElementById('admin-controls-btn');
-  const devLinkForm = document.getElementById('dev-link-form');
-  const devEmailInput = document.getElementById('dev-email-input');
-  const customUsernameInput = document.getElementById('custom-username-input');
-  const usernameStatusBadge = document.getElementById('username-status-badge');
-  const profileLinkedEmail = document.getElementById('profile-linked-email');
-  const profileRoleBadge = document.getElementById('profile-role-badge');
-  const adminModal = document.getElementById('admin-modal');
-  const closeAdminModalBtn = document.getElementById('close-admin-modal');
-  const adminClearChatBtn = document.getElementById('admin-clear-chat-btn');
-  const adminCloseActionBtn = document.getElementById('admin-close-action-btn');
 
   const lightboxModal = document.getElementById('lightbox-modal');
   const lightboxImg = document.getElementById('lightbox-img');
@@ -676,99 +656,18 @@
   }
 
   // --- UI Update Helpers ---
-  function updateAuthUI() {
-    if (state.isAuthenticated && state.user) {
-      // 1. Header Profile Pill (Authenticated)
-      const initial = (state.user.displayName || state.user.username || 'U').charAt(0).toUpperCase();
-      userAvatarEl.style.backgroundColor = state.user.avatarColor || '#f59e0b';
-      userAvatarEl.innerText = initial;
-      userDisplayNameEl.innerText = state.user.displayName || state.user.username;
-
-      if (dropdownUserAvatar) {
-        dropdownUserAvatar.style.backgroundColor = state.user.avatarColor || '#f59e0b';
-        dropdownUserAvatar.innerText = initial;
-      }
-      if (dropdownUserName) {
-        dropdownUserName.innerText = state.user.displayName || state.user.username;
-      }
-      if (dropdownUserHandle) {
-        dropdownUserHandle.innerText = `@${state.user.username}`;
-      }
-      if (dropdownUserRole) {
-        dropdownUserRole.innerText = state.user.isAdmin ? 'Administrator' : 'Verified Member';
-        dropdownUserRole.style.color = state.user.isAdmin ? '#fbbf24' : 'var(--accent-cyan)';
-      }
-      if (editProfileBtnText) {
-        editProfileBtnText.innerText = 'Edit';
-      }
-
-      if (linkAccountItemBtn) linkAccountItemBtn.classList.add('hidden');
-      if (logoutItemBtn) logoutItemBtn.classList.remove('hidden');
-
-      if (adminControlsBtn) {
-        if (state.user.isAdmin) {
-          adminControlsBtn.classList.remove('hidden');
-        } else {
-          adminControlsBtn.classList.add('hidden');
-        }
-      }
-
-      // 2. Bottom Input Area (Unlocked)
-      if (appFooter) appFooter.classList.remove('is-locked');
-      messageInput.disabled = false;
-      messageInput.placeholder = 'Say something to the world...';
-      sendBtn.disabled = false;
-      sendBtn.title = 'Swipe right to send';
-      sendBtn.innerHTML = sendBtnIconHtml;
-    } else {
-      // 1. Header Profile Pill (Unlinked Guest)
-      userAvatarEl.style.backgroundColor = '#4a4643';
-      userAvatarEl.innerText = '?';
-      userDisplayNameEl.innerText = 'Link Account';
-
-      if (dropdownUserAvatar) {
-        dropdownUserAvatar.style.backgroundColor = '#4a4643';
-        dropdownUserAvatar.innerText = '?';
-      }
-      if (dropdownUserName) {
-        dropdownUserName.innerText = 'Guest';
-      }
-      if (dropdownUserHandle) {
-        dropdownUserHandle.innerText = '@unlinked';
-      }
-      if (dropdownUserRole) {
-        dropdownUserRole.innerText = 'No Account Linked';
-        dropdownUserRole.style.color = 'var(--text-muted)';
-      }
-      if (editProfileBtnText) {
-        editProfileBtnText.innerText = 'Link';
-      }
-
-      if (linkAccountItemBtn) linkAccountItemBtn.classList.remove('hidden');
-      if (logoutItemBtn) logoutItemBtn.classList.add('hidden');
-      if (adminControlsBtn) adminControlsBtn.classList.add('hidden');
-
-      // 2. Bottom Input Area (LOCKED)
-      if (appFooter) appFooter.classList.add('is-locked');
-      messageInput.disabled = true;
-      messageInput.placeholder = 'Link your Gmail account to chat...';
-      sendBtn.disabled = true;
-      sendBtn.title = 'Link your Gmail account to send messages';
-      sendBtn.innerHTML = `
-        <span class="send-btn-icon neo-icon" style="opacity: 0.7;">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-          </svg>
-        </span>
-        <span class="send-btn-label">
-          <span>Locked</span>
-        </span>
-      `;
-    }
-  }
-
   function updateHeaderProfile() {
-    updateAuthUI();
+    userAvatarEl.style.backgroundColor = state.color;
+    userAvatarEl.innerText = state.username.charAt(0);
+    userDisplayNameEl.innerText = state.username;
+
+    if (dropdownUserAvatar) {
+      dropdownUserAvatar.style.backgroundColor = state.color;
+      dropdownUserAvatar.innerText = state.username.charAt(0);
+    }
+    if (dropdownUserName) {
+      dropdownUserName.innerText = state.username;
+    }
   }
 
   function updateTogglesUI() {
@@ -849,49 +748,12 @@
 
   socket.on('connect', () => {
     console.log('[Socket] Connected to World Chat server');
-    socket.emit('auth:join', {
-      authToken: state.authToken,
-      clientToken: state.clientToken
+    socket.emit('auth:guest_join', {
+      username: state.username,
+      color: state.color,
+      clientToken: state.clientToken,
+      userId: state.userId
     });
-  });
-
-  socket.on('auth:state', (authData) => {
-    state.isAuthenticated = !!authData.authenticated;
-    if (authData.user) {
-      state.user = authData.user;
-      state.isAdmin = authData.user.isAdmin;
-      state.username = authData.user.username;
-      state.displayName = authData.user.displayName;
-      state.color = authData.user.avatarColor || '#f59e0b';
-    } else {
-      state.user = null;
-      state.isAdmin = false;
-    }
-    updateAuthUI();
-  });
-
-  socket.on('chat:message_deleted', ({ messageId }) => {
-    const el = document.querySelector(`[data-msg-id="${messageId}"]`);
-    if (el) {
-      el.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
-      el.style.opacity = '0';
-      el.style.transform = 'scale(0.92) translateY(-6px)';
-      setTimeout(() => el.remove(), 300);
-    }
-  });
-
-  socket.on('chat:cleared', () => {
-    messagesList.innerHTML = '';
-    showToast('World Chat was cleared by an administrator.', 'info');
-  });
-
-  socket.on('auth:banned', ({ message }) => {
-    state.authToken = null;
-    state.user = null;
-    state.isAuthenticated = false;
-    localStorage.removeItem('wc_auth_token');
-    updateAuthUI();
-    showToast(message || 'You have been disconnected by an administrator.', 'error', 6000);
   });
 
   socket.on('presence:update', (data) => {
@@ -902,13 +764,13 @@
   socket.on('world:history', (historyMessages) => {
     messagesList.innerHTML = '';
     if (Array.isArray(historyMessages)) {
-      historyMessages.forEach(msg => appendMessage(msg, state.user ? msg.userId === state.user.id : false));
+      historyMessages.forEach(msg => appendMessage(msg, msg.userId === state.userId));
     }
     scrollToBottom(true);
   });
 
   socket.on('chat:broadcast', (msg) => {
-    const isOwn = state.user ? msg.userId === state.user.id : false;
+    const isOwn = msg.userId === state.userId;
     appendMessage(msg, isOwn);
     if (!isOwn) playPopSound();
 
@@ -920,8 +782,7 @@
   });
 
   socket.on('typing:update', (data) => {
-    const myName = state.user ? (state.user.displayName || state.user.username) : state.username;
-    const typers = (data.typingUsers || []).filter(name => name !== myName);
+    const typers = (data.typingUsers || []).filter(name => name !== state.username);
     if (typers.length === 0) {
       typingIndicator.classList.add('hidden');
     } else {
@@ -938,9 +799,6 @@
 
   socket.on('chat:error', (err) => {
     showToast(err.message || 'Error sending message', 'error');
-    if (err.type === 'auth_required') {
-      openLinkModal();
-    }
     if (err.cooldown) {
       triggerCooldownDisplay(err.cooldown);
     }
@@ -992,28 +850,15 @@
     }
 
     // Sanitize author and color defensively to prevent DOM injection
-    const safeAuthorDisplayName = (msg.displayName || msg.username || 'Guest')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-    const safeAuthorUsername = (msg.username || 'user')
+    const safeAuthorName = (msg.username || 'Guest')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
     const safeAuthorColor = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#f59e0b';
-    const isAdminMsg = !!msg.isAdmin;
-
-    const adminBadgeHtml = isAdminMsg
-      ? `<span class="admin-badge" title="Official World Chat Administrator"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-1h14v1z"/></svg> ADMIN</span>`
-      : '';
 
     // Render author name externally above the bubble row (omitted on consecutive messages from the same sender)
     const authorHtml = !isConsecutive
-      ? `<div class="msg-author-external" style="color: ${safeAuthorColor}">
-           <span class="msg-author-name">${safeAuthorDisplayName}</span>
-           <span class="msg-author-handle">@${safeAuthorUsername}</span>
-           ${adminBadgeHtml}
-         </div>`
+      ? `<div class="msg-author-external" style="color: ${safeAuthorColor}">${safeAuthorName}</div>`
       : '';
 
     // Render reply quote block if this message is replying to another message
@@ -1044,7 +889,7 @@
         ? `${Icons.camera} <span>${safeSnippet}</span>`
         : safeSnippet;
 
-      const safeQuoteAuthor = (msg.replyTo.displayName || msg.replyTo.username || 'Guest')
+      const safeQuoteAuthor = (msg.replyTo.username || 'Guest')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
@@ -1063,20 +908,11 @@
       `;
     }
 
-    const adminDeleteBtnHtml = state.isAdmin
-      ? `<button type="button" class="msg-admin-delete-btn" title="Delete Message (Admin)" data-msg-id="${msg.id}">
-           <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-           </svg>
-         </button>`
-      : '';
-
     // Floating cloud bubble with external timestamp & reply button
     item.innerHTML = `
       ${authorHtml}
       <div class="msg-bubble-row">
         <div class="msg-cloud-bubble">
-          ${adminDeleteBtnHtml}
           ${replyQuoteHtml}
           ${formattedText ? `<div class="msg-text">${formattedText}</div>` : ''}
           ${imageHtml}
@@ -1087,17 +923,6 @@
         </button>
       </div>
     `;
-
-    // Click handler for admin message delete button
-    const deleteBtn = item.querySelector('.msg-admin-delete-btn');
-    if (deleteBtn) {
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (confirm('Delete this message for everyone?')) {
-          socket.emit('admin:delete_message', { messageId: msg.id });
-        }
-      });
-    }
 
     // Click handler for reply button
     const replyBtn = item.querySelector('.msg-reply-btn');
@@ -1199,24 +1024,10 @@
     socket.emit('typing:update', { isTyping: false });
   });
 
-  // Intercept clicks on input bubble when unlinked
-  if (chatInputBubble) {
-    chatInputBubble.addEventListener('click', (e) => {
-      if (!state.isAuthenticated) {
-        e.preventDefault();
-        openLinkModal();
-      }
-    });
-  }
-
   // --- Photo Attachment & Plus Popup Handling ---
   if (plusBtn && actionsPopup) {
     plusBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (!state.isAuthenticated) {
-        openLinkModal();
-        return;
-      }
       const willOpen = actionsPopup.classList.contains('hidden');
       actionsPopup.classList.toggle('hidden');
       if (willOpen) {
@@ -1238,11 +1049,6 @@
 
   attachBtn.addEventListener('click', () => {
     SoundFX.click();
-    if (!state.isAuthenticated) {
-      if (actionsPopup) actionsPopup.classList.add('hidden');
-      openLinkModal();
-      return;
-    }
     if (actionsPopup) actionsPopup.classList.add('hidden');
     fileInput.click();
   });
@@ -1268,10 +1074,6 @@
   });
 
   chatViewport.addEventListener('drop', (e) => {
-    if (!state.isAuthenticated) {
-      openLinkModal();
-      return;
-    }
     if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       if (file.type.startsWith('image/')) {
@@ -1283,10 +1085,6 @@
   });
 
   function handleSelectedFile(file) {
-    if (!state.isAuthenticated) {
-      openLinkModal();
-      return;
-    }
     // 5 MB limit check
     if (file.size > 5 * 1024 * 1024) {
       showToast('Photo is too large! Maximum allowed size is 5 MB.', 'error');
@@ -1416,11 +1214,6 @@
 
   // --- Message Dispatch Engine ---
   async function handleSendMessage() {
-    if (!state.isAuthenticated) {
-      openLinkModal();
-      return;
-    }
-
     const text = messageInput.value.trim();
 
     if (!text && !state.stagedFile) return;
@@ -1445,8 +1238,7 @@
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: {
-            'x-client-id': state.clientToken,
-            'x-auth-token': state.authToken || ''
+            'x-client-id': state.clientToken
           },
           body: formData
         });
@@ -1500,11 +1292,6 @@
   let hasMovedSignificantly = false;
 
   sendBtn.addEventListener('pointerdown', (e) => {
-    if (!state.isAuthenticated) {
-      e.preventDefault();
-      openLinkModal();
-      return;
-    }
     if (sendBtn.disabled || state.isUploading || sendBtn.classList.contains('countdown')) return;
     
     SoundFX.swipeStart();
@@ -1694,181 +1481,15 @@
     }
   });
 
-  // --- Account Linking Modals & Auth Functions ---
-  function openLinkModal() {
-    SoundFX.modalOpen();
-    if (profileDropdownMenu) profileDropdownMenu.classList.add('hidden');
-    if (profileBtn) {
-      profileBtn.classList.remove('active');
-      profileBtn.setAttribute('aria-expanded', 'false');
-    }
-    linkAccountModal.classList.remove('hidden');
-    if (devEmailInput) devEmailInput.focus();
-  }
-
-  function closeLinkModal() {
-    SoundFX.modalClose();
-    linkAccountModal.classList.add('hidden');
-  }
-
-  if (closeLinkModalBtn) closeLinkModalBtn.addEventListener('click', closeLinkModal);
-  if (linkAccountModal) {
-    linkAccountModal.addEventListener('click', (e) => {
-      if (e.target === linkAccountModal) closeLinkModal();
-    });
-  }
-  if (linkAccountItemBtn) {
-    linkAccountItemBtn.addEventListener('click', () => {
-      openLinkModal();
-    });
-  }
-
-  function handleAuthSuccess(token, user, showWelcome = false) {
-    state.authToken = token;
-    state.user = user;
-    state.isAuthenticated = true;
-    state.isAdmin = user.role === 'admin';
-    state.username = user.username;
-    state.displayName = user.displayName;
-    state.color = user.avatarColor || '#f59e0b';
-
-    localStorage.setItem('wc_auth_token', token);
-    localStorage.setItem('wc_username', user.username);
-    localStorage.setItem('wc_display_name', user.displayName);
-    localStorage.setItem('wc_color', state.color);
-
-    updateAuthUI();
-    if (linkAccountModal) linkAccountModal.classList.add('hidden');
-
-    socket.emit('auth:join', { authToken: token, clientToken: state.clientToken });
-
-    if (showWelcome) {
-      showToast(`Linked as ${user.displayName} (@${user.username})`, 'info');
-    }
-  }
-
-  if (devLinkForm) {
-    devLinkForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      SoundFX.click();
-      const email = (devEmailInput.value || '').trim().toLowerCase();
-      if (!email.endsWith('@gmail.com') && !email.endsWith('@googlemail.com')) {
-        showToast('Only Gmail accounts (@gmail.com) are supported.', 'error');
-        return;
-      }
-
-      try {
-        const resp = await fetch('/api/auth/dev_link', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          throw new Error(data.error || 'Failed to link account.');
-        }
-        handleAuthSuccess(data.token, data.user, true);
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  }
-
-  if (logoutItemBtn) {
-    logoutItemBtn.addEventListener('click', async () => {
-      SoundFX.click();
-      if (profileDropdownMenu) profileDropdownMenu.classList.add('hidden');
-      if (profileBtn) {
-        profileBtn.classList.remove('active');
-        profileBtn.setAttribute('aria-expanded', 'false');
-      }
-
-      try {
-        if (state.authToken) {
-          await fetch('/api/auth/logout', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${state.authToken}` }
-          });
-        }
-      } catch (_) {}
-
-      state.authToken = null;
-      state.user = null;
-      state.isAuthenticated = false;
-      state.isAdmin = false;
-      localStorage.removeItem('wc_auth_token');
-
-      updateAuthUI();
-      socket.emit('auth:join', { authToken: null, clientToken: state.clientToken });
-      showToast('Signed out. Account unlinked.', 'info');
-    });
-  }
-
-  // --- Admin Modal Functions ---
-  function openAdminModal() {
-    SoundFX.modalOpen();
-    if (profileDropdownMenu) profileDropdownMenu.classList.add('hidden');
-    if (profileBtn) {
-      profileBtn.classList.remove('active');
-      profileBtn.setAttribute('aria-expanded', 'false');
-    }
-    adminModal.classList.remove('hidden');
-  }
-
-  function closeAdminModal() {
-    SoundFX.modalClose();
-    adminModal.classList.add('hidden');
-  }
-
-  if (adminControlsBtn) adminControlsBtn.addEventListener('click', openAdminModal);
-  if (closeAdminModalBtn) closeAdminModalBtn.addEventListener('click', closeAdminModal);
-  if (adminCloseActionBtn) adminCloseActionBtn.addEventListener('click', closeAdminModal);
-  if (adminModal) {
-    adminModal.addEventListener('click', (e) => {
-      if (e.target === adminModal) closeAdminModal();
-    });
-  }
-
-  if (adminClearChatBtn) {
-    adminClearChatBtn.addEventListener('click', () => {
-      SoundFX.click();
-      if (confirm('Are you sure you want to purge all messages in World Chat? This cannot be undone.')) {
-        socket.emit('admin:clear_chat');
-        closeAdminModal();
-      }
-    });
-  }
-
-  // --- Profile Customization Modal & Live Availability ---
+  // Open customization modal from the dropdown's Edit button
   if (editProfileBtn) {
     editProfileBtn.addEventListener('click', () => {
-      if (!state.isAuthenticated) {
-        openLinkModal();
-        return;
-      }
-
       SoundFX.modalOpen();
       profileDropdownMenu.classList.add('hidden');
       profileBtn.classList.remove('active');
       profileBtn.setAttribute('aria-expanded', 'false');
-
-      customNameInput.value = state.user?.displayName || state.displayName || '';
-      if (customUsernameInput) {
-        customUsernameInput.value = state.user?.username || state.username || '';
-      }
-      if (profileLinkedEmail) {
-        profileLinkedEmail.innerText = state.user?.email || 'None';
-      }
-      if (profileRoleBadge) {
-        profileRoleBadge.innerText = state.user?.isAdmin ? 'Administrator' : 'Verified Member';
-        profileRoleBadge.style.color = state.user?.isAdmin ? '#fbbf24' : 'var(--accent-cyan)';
-      }
-      if (usernameStatusBadge) {
-        usernameStatusBadge.className = 'username-status-badge';
-        usernameStatusBadge.innerText = `@${customUsernameInput.value} (current)`;
-      }
-
-      modalSelectedColor = state.user?.avatarColor || state.color || '#f59e0b';
+      customNameInput.value = state.username;
+      modalSelectedColor = state.color;
       renderColorPalette();
       updateModalPreview();
       profileModal.classList.remove('hidden');
@@ -1887,58 +1508,6 @@
     }
   });
 
-  // Live Username Availability Checker with Debounce
-  let usernameCheckDebounce = null;
-  if (customUsernameInput) {
-    customUsernameInput.addEventListener('input', () => {
-      updateModalPreview();
-      clearTimeout(usernameCheckDebounce);
-      const raw = customUsernameInput.value.trim().toLowerCase();
-      if (!raw) {
-        usernameStatusBadge.className = 'username-status-badge';
-        usernameStatusBadge.innerText = 'Username cannot be empty';
-        return;
-      }
-      if (state.user && raw === state.user.username.toLowerCase()) {
-        usernameStatusBadge.className = 'username-status-badge';
-        usernameStatusBadge.innerText = `@${raw} (current username)`;
-        return;
-      }
-      if (!/^[a-z0-9_]{3,20}$/.test(raw)) {
-        usernameStatusBadge.className = 'username-status-badge taken';
-        usernameStatusBadge.innerText = 'Must be 3-20 characters: lowercase letters, numbers, and underscores only';
-        return;
-      }
-
-      usernameStatusBadge.className = 'username-status-badge checking';
-      usernameStatusBadge.innerText = `Checking @${raw}...`;
-
-      usernameCheckDebounce = setTimeout(async () => {
-        try {
-          const resp = await fetch('/api/auth/check_username', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              username: raw,
-              excludeUserId: state.user ? state.user.id : null
-            })
-          });
-          const data = await resp.json();
-          if (data.available) {
-            usernameStatusBadge.className = 'username-status-badge available';
-            usernameStatusBadge.innerText = `${data.message}`;
-          } else {
-            usernameStatusBadge.className = 'username-status-badge taken';
-            usernameStatusBadge.innerText = `${data.message}`;
-          }
-        } catch (_) {
-          usernameStatusBadge.className = 'username-status-badge';
-          usernameStatusBadge.innerText = 'Unable to check username';
-        }
-      }, 300);
-    });
-  }
-
   function renderColorPalette() {
     colorPaletteEl.innerHTML = '';
     COLOR_PALETTE.forEach((c, idx) => {
@@ -1956,132 +1525,40 @@
   }
 
   function updateModalPreview() {
-    const previewDisplayName = customNameInput.value.trim() || 'Guest';
-    const previewHandle = customUsernameInput ? (customUsernameInput.value.trim().toLowerCase() || 'username') : 'username';
-    modalPreviewName.innerText = previewDisplayName;
+    const previewName = customNameInput.value.trim() || 'Guest';
+    modalPreviewName.innerText = previewName;
     modalPreviewName.style.color = modalSelectedColor;
-    if (modalPreviewHandle) {
-      modalPreviewHandle.innerText = `@${previewHandle}`;
-    }
     modalPreviewAvatar.style.backgroundColor = modalSelectedColor;
-    modalPreviewAvatar.innerText = previewDisplayName.charAt(0).toUpperCase();
+    modalPreviewAvatar.innerText = previewName.charAt(0).toUpperCase();
   }
 
   customNameInput.addEventListener('input', updateModalPreview);
 
-  saveProfileBtn.addEventListener('click', async () => {
+  saveProfileBtn.addEventListener('click', () => {
     SoundFX.click();
-    const newDisplayName = customNameInput.value.trim();
-    const newUsername = customUsernameInput ? customUsernameInput.value.trim().toLowerCase() : '';
+    let newName = customNameInput.value.trim();
+    if (!newName) newName = 'Guest#' + Math.floor(1000 + Math.random() * 9000);
+    if (newName.length > 24) newName = newName.substring(0, 24);
 
-    if (!newDisplayName) {
-      showToast('Display name cannot be empty', 'error');
-      return;
-    }
-    if (!newUsername) {
-      showToast('Username cannot be empty', 'error');
-      return;
-    }
+    state.username = newName;
+    state.color = modalSelectedColor;
 
-    try {
-      saveProfileBtn.disabled = true;
-      saveProfileBtn.innerText = 'Saving...';
+    localStorage.setItem('wc_username', state.username);
+    localStorage.setItem('wc_color', state.color);
 
-      const resp = await fetch('/api/auth/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${state.authToken}`
-        },
-        body: JSON.stringify({
-          displayName: newDisplayName,
-          username: newUsername,
-          avatarColor: modalSelectedColor
-        })
-      });
+    updateHeaderProfile();
+    profileModal.classList.add('hidden');
 
-      const data = await resp.json();
-      if (!resp.ok) {
-        throw new Error(data.error || 'Failed to update profile');
-      }
+    // Notify server of updated name/color
+    socket.emit('auth:guest_join', {
+      username: state.username,
+      color: state.color,
+      clientToken: state.clientToken,
+      userId: state.userId
+    });
 
-      state.user = data.user;
-      state.displayName = data.user.displayName;
-      state.username = data.user.username;
-      state.color = data.user.avatarColor;
-
-      localStorage.setItem('wc_display_name', state.displayName);
-      localStorage.setItem('wc_username', state.username);
-      localStorage.setItem('wc_color', state.color);
-
-      updateAuthUI();
-      profileModal.classList.add('hidden');
-      showToast('Profile updated successfully!', 'info');
-    } catch (err) {
-      showToast(err.message, 'error');
-    } finally {
-      saveProfileBtn.disabled = false;
-      saveProfileBtn.innerText = 'Save Changes';
-    }
+    showToast('Profile updated!', 'info');
   });
-
-  // --- Google Identity Services Callback & Initialization ---
-  window.handleGoogleCredentialResponse = async function(response) {
-    try {
-      const resp = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: response.credential })
-      });
-      const data = await resp.json();
-      if (!resp.ok) {
-        throw new Error(data.error || 'Google login failed.');
-      }
-      handleAuthSuccess(data.token, data.user, true);
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
-  async function initGoogleAuth() {
-    try {
-      const resp = await fetch('/api/auth/config');
-      const config = await resp.json();
-      state.googleClientId = config.googleClientId;
-
-      if (state.googleClientId && window.google?.accounts?.id) {
-        google.accounts.id.initialize({
-          client_id: state.googleClientId,
-          callback: window.handleGoogleCredentialResponse
-        });
-        const gBtn = document.getElementById('g-id-signin-btn');
-        if (gBtn) {
-          google.accounts.id.renderButton(gBtn, {
-            theme: state.theme === 'neomorphism-light' ? 'outline' : 'filled_black',
-            size: 'large',
-            shape: 'pill',
-            text: 'continue_with'
-          });
-        }
-      }
-    } catch (_) {}
-  }
-
-  async function bootAuthSession() {
-    if (state.authToken) {
-      try {
-        const resp = await fetch('/api/auth/me', {
-          headers: { 'Authorization': `Bearer ${state.authToken}` }
-        });
-        const data = await resp.json();
-        if (resp.ok && data.authenticated && data.user) {
-          handleAuthSuccess(state.authToken, data.user, false);
-          return;
-        }
-      } catch (_) {}
-    }
-    updateAuthUI();
-  }
 
   // --- Lightbox Modal ---
   function openLightbox(url) {
@@ -2105,22 +1582,12 @@
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      const modalOpen = 
-        !lightboxModal.classList.contains('hidden') || 
-        !profileModal.classList.contains('hidden') || 
-        !linkAccountModal.classList.contains('hidden') || 
-        (adminModal && !adminModal.classList.contains('hidden'));
+      const modalOpen = !lightboxModal.classList.contains('hidden') || !profileModal.classList.contains('hidden');
       if (modalOpen) {
         SoundFX.modalClose();
       }
       lightboxModal.classList.add('hidden');
       profileModal.classList.add('hidden');
-      linkAccountModal.classList.add('hidden');
-      if (adminModal) adminModal.classList.add('hidden');
     }
   });
-
-  // Boot Application Auth
-  bootAuthSession();
-  initGoogleAuth();
 })();

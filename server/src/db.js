@@ -73,19 +73,14 @@ module.exports = {
       id: msg.id || 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
       userId: msg.userId,
       username: msg.username,
-      displayName: msg.displayName || msg.username,
-      isAdmin: !!msg.isAdmin,
-      role: msg.role || 'user',
-      color: msg.color || '#f59e0b',
+      color: msg.color || '#38bdf8',
       text: msg.text || '',
       imageUrl: msg.imageUrl || null,
       timestamp: msg.timestamp || new Date().toISOString(),
       replyTo: msg.replyTo ? {
         id: msg.replyTo.id,
         username: msg.replyTo.username,
-        displayName: msg.replyTo.displayName || msg.replyTo.username,
-        isAdmin: !!msg.replyTo.isAdmin,
-        color: msg.replyTo.color || '#f59e0b',
+        color: msg.replyTo.color || '#38bdf8',
         text: msg.replyTo.text ? String(msg.replyTo.text).substring(0, 100) : '',
         imageUrl: msg.replyTo.imageUrl || null
       } : null
@@ -96,29 +91,5 @@ module.exports = {
     }
     schedulePersist();
     return record;
-  },
-
-  deleteMessage(id) {
-    if (!id) return false;
-    const index = messages.findIndex(m => m.id === id);
-    if (index === -1) return false;
-    messages.splice(index, 1);
-    schedulePersist();
-    return true;
-  },
-
-  clearMessages() {
-    messages = [];
-    schedulePersist();
-    return true;
-  },
-
-  deleteMessagesByUser(userId) {
-    if (!userId) return 0;
-    const initial = messages.length;
-    messages = messages.filter(m => m.userId !== userId);
-    const deleted = initial - messages.length;
-    if (deleted > 0) schedulePersist();
-    return deleted;
   }
 };
