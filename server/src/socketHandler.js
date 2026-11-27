@@ -203,6 +203,28 @@ module.exports = function registerSocketHandlers(io, releaseInfo = null) {
         ? payload.styleVariant
         : 'default';
 
+      // Enforce dedicated 5-second cooldown when sending a Message Card Mood animation
+      if (styleVariant !== 'default') {
+        const moodTokenCheck = rateLimiter.checkMoodLimit(session.clientToken);
+        if (!moodTokenCheck.allowed) {
+          return socket.emit('chat:error', {
+            message: moodTokenCheck.reason,
+            moodCooldown: moodTokenCheck.waitSeconds,
+            type: 'mood_cooldown'
+          });
+        }
+        const moodIpCheck = rateLimiter.checkMoodLimit(session.ip);
+        if (!moodIpCheck.allowed) {
+          return socket.emit('chat:error', {
+            message: moodIpCheck.reason,
+            moodCooldown: moodIpCheck.waitSeconds,
+            type: 'mood_cooldown'
+          });
+        }
+        rateLimiter.recordMood(session.clientToken);
+        rateLimiter.recordMood(session.ip);
+      }
+
       // Resolve reply context if replyToId is provided
       let replyToData = null;
       if (payload.replyToId && typeof payload.replyToId === 'string') {

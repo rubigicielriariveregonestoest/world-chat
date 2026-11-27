@@ -484,6 +484,132 @@
     // 19. Slowmode Cooldown / Rate Limit Error
     errorAlert() {
       this.toast('error');
+    },
+
+    /*
+     * 20. Message Card Mood Soundscapes (Exact 3.0s Envelope with Smooth Fade-Out)
+     * Synthesizes bespoke 3-second audio tracks per mood (breezy storm + thunder
+     * for Calm Note, stage sweep shimmer for Spotlight, celebratory sparkles for
+     * Greeting) while leaving the visual chat bubble animation running forever.
+     */
+    moodEffect(mood) {
+      if (!state.soundEnabled) return;
+      if (!mood || mood === 'default') return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.0001, now);
+        masterGain.gain.linearRampToValueAtTime(0.22, now + 0.14);
+        masterGain.gain.setValueAtTime(0.20, now + 2.15);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.0);
+        masterGain.connect(ctx.destination);
+
+        if (mood === 'calm') {
+          // 3.0s wind gusts & swirling leaves filtered noise + distant soft thunder
+          const bufferSize = Math.floor(ctx.sampleRate * 3.0);
+          const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const output = noiseBuffer.getChannelData(0);
+          let b0 = 0;
+          for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            b0 = 0.96 * b0 + white * 0.04;
+            output[i] = b0 * 2.4;
+          }
+
+          const noise = ctx.createBufferSource();
+          noise.buffer = noiseBuffer;
+          const windFilter = ctx.createBiquadFilter();
+          windFilter.type = 'bandpass';
+          windFilter.Q.setValueAtTime(2.2, now);
+          windFilter.frequency.setValueAtTime(260, now);
+          windFilter.frequency.linearRampToValueAtTime(640, now + 1.1);
+          windFilter.frequency.linearRampToValueAtTime(290, now + 2.8);
+
+          const windGain = ctx.createGain();
+          windGain.gain.setValueAtTime(0.55, now);
+          noise.connect(windFilter);
+          windFilter.connect(windGain);
+          windGain.connect(masterGain);
+          noise.start(now);
+          noise.stop(now + 3.0);
+
+          // Low distant thunder rumble + brief lightning crack shimmer
+          const thunderOsc = ctx.createOscillator();
+          const thunderGain = ctx.createGain();
+          thunderOsc.type = 'triangle';
+          thunderOsc.frequency.setValueAtTime(86, now + 0.45);
+          thunderOsc.frequency.exponentialRampToValueAtTime(42, now + 2.75);
+          thunderGain.gain.setValueAtTime(0.0001, now);
+          thunderGain.gain.linearRampToValueAtTime(0.28, now + 0.65);
+          thunderGain.gain.exponentialRampToValueAtTime(0.001, now + 2.9);
+          thunderOsc.connect(thunderGain);
+          thunderGain.connect(masterGain);
+          thunderOsc.start(now + 0.4);
+          thunderOsc.stop(now + 2.95);
+        } else if (mood === 'spotlight') {
+          // 3.0s stage spotlight warm chord + LED sweep chimes
+          const padFreqs = [293.66, 440, 659.25];
+          padFreqs.forEach((freq) => {
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+            g.gain.setValueAtTime(0.14, now);
+            osc.connect(g);
+            g.connect(masterGain);
+            osc.start(now);
+            osc.stop(now + 3.0);
+          });
+
+          const chimeNotes = [739.99, 880, 1174.66, 880];
+          chimeNotes.forEach((freq, idx) => {
+            const start = now + idx * 0.42;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, start);
+            g.gain.setValueAtTime(0.18, start);
+            g.gain.exponentialRampToValueAtTime(0.001, Math.min(now + 2.95, start + 0.75));
+            osc.connect(g);
+            g.connect(masterGain);
+            osc.start(start);
+            osc.stop(Math.min(now + 3.0, start + 0.8));
+          });
+        } else if (mood === 'greeting') {
+          // 3.0s celebratory greeting fanfare + confetti sparkles
+          const fanfare = [523.25, 659.25, 783.99, 1046.5];
+          fanfare.forEach((freq, idx) => {
+            const start = now + idx * 0.11;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, start);
+            g.gain.setValueAtTime(0.22, start);
+            g.gain.exponentialRampToValueAtTime(0.01, Math.min(now + 2.95, start + 1.6));
+            osc.connect(g);
+            g.connect(masterGain);
+            osc.start(start);
+            osc.stop(Math.min(now + 3.0, start + 1.65));
+          });
+
+          const sparkles = [1318.51, 1567.98, 1760, 2093, 1567.98, 1975.53];
+          sparkles.forEach((freq, idx) => {
+            const start = now + 0.45 + idx * 0.34;
+            if (start >= now + 2.8) return;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, start);
+            g.gain.setValueAtTime(0.12, start);
+            g.gain.exponentialRampToValueAtTime(0.001, Math.min(now + 2.98, start + 0.36));
+            osc.connect(g);
+            g.connect(masterGain);
+            osc.start(start);
+            osc.stop(Math.min(now + 3.0, start + 0.4));
+          });
+        }
+      } catch (_) {}
     }
   };
 
@@ -569,7 +695,7 @@
   const NOUNS = ['Pulsar', 'Voyager', 'Comet', 'Falcon', 'Orion', 'Nomad', 'Spark', 'Phoenix', 'Star', 'Specter', 'Drifter', 'Echo'];
 
   const DISTINGUISHED_USER_ICONS = ['🌟', '🚀', '🌙', '☀️', '🪐', '🔥', '⚡', '🧭', '🦋', '🦊', '🐬', '💎'];
-  const CLIENT_APP_VERSION = '1.3.0';
+  const CLIENT_APP_VERSION = '1.4.0';
 
   function formatUpdateLabel(version) {
     const clean = String(version || '').trim().replace(/^v/i, '');
@@ -578,10 +704,22 @@
 
   const DEFAULT_RELEASE_HISTORY = [
     {
+      version: '1.4.0',
+      label: formatUpdateLabel('1.4.0'),
+      updateNumber: 4,
+      commit: 'latest',
+      title: 'Animated Message Card Moods, 3s Soundscapes & Light Theme Visibility',
+      highlights: [
+        'Upgraded Calm Note (wind, swirling leaves, storm, thunder & lightning), Spotlight (LED uplights, waving spotlights & inner glow), and Greeting (endless confetti, top-left party hat & proportionate sun rays) into endless behind-text bubble animations',
+        'Made all Message Card Mood effects clearly visible across both Serene Light and Midnight Dark themes',
+        'Added bespoke 3-second fading audio effects per mood plus a dedicated 5-second Message Card Mood cooldown'
+      ]
+    },
+    {
       version: '1.3.0',
       label: formatUpdateLabel('1.3.0'),
       updateNumber: 3,
-      commit: 'latest',
+      commit: 'be3aaea',
       title: 'App Updates History & Semantic Versioning',
       highlights: [
         'Always synchronizes App Updates with each release using strict "Update x.y.z" semantic versioning',
@@ -819,6 +957,7 @@
   const beautifyWrapper = document.getElementById('beautify-wrapper');
   const beautifyBtn = document.getElementById('beautify-btn');
   const beautifyMoodDot = document.getElementById('beautify-mood-dot');
+  const beautifyMoodCooldown = document.getElementById('beautify-mood-cooldown');
   const beautifyPopover = document.getElementById('beautify-popover');
   const beautifyEmojiRow = document.getElementById('beautify-emoji-row');
   const polishMsgBtn = document.getElementById('polish-msg-btn');
@@ -1583,7 +1722,11 @@
   socket.on('chat:broadcast', (msg) => {
     const isOwn = msg.userId === state.userId;
     appendMessage(msg, isOwn);
-    if (!isOwn) playPopSound();
+    if (msg && ['calm', 'spotlight', 'greeting'].includes(msg.styleVariant)) {
+      SoundFX.moodEffect(msg.styleVariant);
+    } else if (!isOwn) {
+      playPopSound();
+    }
 
     if (state.isNearBottom || isOwn) {
       scrollToBottom();
@@ -1773,9 +1916,12 @@
   });
 
   socket.on('chat:error', (err) => {
-    showToast(err.message || 'Error sending message', 'error');
+    showToast(err.message || 'Error sending message', err.type === 'mood_cooldown' ? 'warning' : 'error');
     if (err.cooldown) {
       triggerCooldownDisplay(err.cooldown);
+    }
+    if (err.moodCooldown) {
+      startMoodCooldown(err.moodCooldown);
     }
   });
 
@@ -1855,6 +2001,96 @@
   document.addEventListener('click', () => {
     closeAllReactionPickers();
   });
+
+  /*
+   * Animated Message Card Mood DOM Builder
+   * Generates endless behind-text effect layers exclusively inside chat bubbles
+   * (Calm storm/leaves/lightning, Spotlight LEDs & beams, Greeting confetti)
+   * plus Greeting's top-left party hat and bubble-proportionate behind sun rays.
+   */
+  function buildMoodLayers(styleVariant) {
+    if (styleVariant === 'calm') {
+      const leafSvg = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66L7 18.8C9.84 19.6 14 19 17 15c3-4 4-9 4-12-1 2-3 4-4 5z"/></svg>';
+      const leavesHtml = [
+        { top: '16%', dur: '3.9s', delay: '0s', alt: '' },
+        { top: '44%', dur: '4.6s', delay: '-1.3s', alt: 'alt' },
+        { top: '70%', dur: '3.5s', delay: '-2.2s', alt: '' },
+        { top: '28%', dur: '4.9s', delay: '-3.1s', alt: 'alt' },
+        { top: '58%', dur: '4.1s', delay: '-0.7s', alt: '' },
+        { top: '80%', dur: '4.4s', delay: '-2.8s', alt: 'alt' }
+      ].map(l => `<span class="calm-leaf ${l.alt}" style="top:${l.top}; --dur:${l.dur}; --delay:${l.delay};">${leafSvg}</span>`).join('');
+
+      const windHtml = [
+        { top: '24%', dur: '2.5s', delay: '0s' },
+        { top: '52%', dur: '3.1s', delay: '-1.1s' },
+        { top: '76%', dur: '2.8s', delay: '-1.9s' }
+      ].map(w => `<span class="calm-wind-line" style="top:${w.top}; --dur:${w.dur}; --delay:${w.delay};"></span>`).join('');
+
+      return {
+        behindBubbleHtml: '',
+        cornerHtml: '',
+        innerStageHtml: `
+          <div class="mood-stage" aria-hidden="true">
+            <div class="calm-storm-clouds"></div>
+            <div class="calm-lightning-flash"></div>
+            <svg class="calm-bolt" viewBox="0 0 24 36" fill="currentColor"><path d="M13 0L3 18h8l-2 18 12-20h-8l4-16z"/></svg>
+            ${windHtml}
+            ${leavesHtml}
+          </div>
+        `
+      };
+    }
+
+    if (styleVariant === 'spotlight') {
+      const leds = '<span class="spotlight-led"></span>'.repeat(5);
+      return {
+        behindBubbleHtml: '',
+        cornerHtml: '',
+        innerStageHtml: `
+          <div class="mood-stage" aria-hidden="true">
+            <div class="spotlight-inner-glow"></div>
+            <div class="spotlight-led-bar top">${leds}</div>
+            <div class="spotlight-led-bar bottom">${leds}</div>
+            <div class="spotlight-beam top-left"></div>
+            <div class="spotlight-beam top-right"></div>
+            <div class="spotlight-beam bottom-left"></div>
+            <div class="spotlight-beam bottom-right"></div>
+          </div>
+        `
+      };
+    }
+
+    if (styleVariant === 'greeting') {
+      const palette = ['#38bdf8', '#fbbf24', '#f472b6', '#34d399', '#a78bfa', '#fb7185'];
+      const confettiPieces = Array.from({ length: 12 }, (_, idx) => {
+        const left = 6 + ((idx * 8) % 88);
+        const dur = (2.8 + (idx % 4) * 0.45).toFixed(2);
+        const delay = (-((idx * 0.43) % 3.2)).toFixed(2);
+        const sway = (idx % 2 === 0 ? 1 : -1) * (6 + (idx % 4) * 3);
+        const color = palette[idx % palette.length];
+        return `<span class="greeting-confetti" style="left:${left}%; background:${color}; --dur:${dur}s; --delay:${delay}s; --sway:${sway}px;"></span>`;
+      }).join('');
+
+      return {
+        behindBubbleHtml: '<div class="mood-sun-rays" aria-hidden="true"></div>',
+        cornerHtml: `
+          <svg class="mood-party-hat" viewBox="0 0 36 36" aria-hidden="true">
+            <polygon points="18,4 6,31 30,31" fill="#2563eb" stroke="#fbbf24" stroke-width="1.5"/>
+            <path d="M13 15l10 3M10 23l16 3" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="18" cy="4" r="3.4" fill="#fbbf24"/>
+            <ellipse cx="18" cy="31" rx="12" ry="2.6" fill="#38bdf8"/>
+          </svg>
+        `,
+        innerStageHtml: `
+          <div class="mood-stage" aria-hidden="true">
+            ${confettiPieces}
+          </div>
+        `
+      };
+    }
+
+    return { behindBubbleHtml: '', cornerHtml: '', innerStageHtml: '' };
+  }
 
   function appendMessage(msg, isOwn = false) {
     const item = document.createElement('div');
@@ -1953,8 +2189,9 @@
       `;
     }
 
-    // Floating cloud bubble with left avatar/distinguished icon, reactions row, external timestamp, react, reply & owner delete buttons
+    // Floating cloud bubble with left avatar/distinguished icon, mood effects, reactions, timestamp & actions
     item._msgData = msg;
+    const moodLayers = buildMoodLayers(allowedMoods.includes(msg.styleVariant) ? msg.styleVariant : 'default');
     const deleteBtnHtml = (isOwn && msg.id)
       ? `<button type="button" class="msg-delete-btn" title="Delete message" aria-label="Delete message"><span>${Icons.trash}</span></button>`
       : '';
@@ -1964,10 +2201,15 @@
       <div class="msg-bubble-row">
         ${avatarSlotHtml}
         <div class="msg-bubble-col">
-          <div class="msg-cloud-bubble ${moodClass}">
-            ${replyQuoteHtml}
-            ${formattedText ? `<div class="msg-text">${formattedText}</div>` : ''}
-            ${imageHtml}
+          <div class="msg-bubble-stage-wrap">
+            ${moodLayers.behindBubbleHtml}
+            <div class="msg-cloud-bubble ${moodClass}">
+              ${moodLayers.innerStageHtml}
+              ${moodLayers.cornerHtml}
+              ${replyQuoteHtml}
+              ${formattedText ? `<div class="msg-text">${formattedText}</div>` : ''}
+              ${imageHtml}
+            </div>
           </div>
           <div class="msg-reactions-row hidden"></div>
         </div>
@@ -2390,13 +2632,18 @@
       }
     }
 
-    // Emit message to World Chat
+    // Emit message to World Chat (tracking 5-second cooldown when a non-default Mood was used)
+    const sentMood = state.messageMood || 'default';
     socket.emit('chat:send', {
       text,
       imageUrl: uploadedImageUrl,
-      styleVariant: state.messageMood || 'default',
+      styleVariant: sentMood,
       replyToId: state.replyTo ? state.replyTo.id : null
     });
+
+    if (sentMood !== 'default') {
+      startMoodCooldown(5);
+    }
 
     // Reset input states
     messageInput.value = '';
@@ -2416,9 +2663,47 @@
     messageInput.focus();
   }
 
-  // --- Message Beautifier Engine (Before Sending) ---
+  // --- Message Beautifier Engine & 5s Mood Cooldown ---
+  let moodCooldownUntil = 0;
+  let moodCooldownInterval = null;
+
+  function updateMoodCooldownUI() {
+    const remainingMs = Math.max(0, moodCooldownUntil - Date.now());
+    const remSec = Math.ceil(remainingMs / 1000);
+    const onCooldown = remSec > 0;
+
+    if (beautifyMoodCooldown) {
+      beautifyMoodCooldown.classList.toggle('hidden', !onCooldown);
+      beautifyMoodCooldown.textContent = onCooldown ? `${remSec}s cooldown` : '';
+    }
+    if (beautifyMoodRow) {
+      beautifyMoodRow.querySelectorAll('.beautify-mood-btn').forEach(btn => {
+        const isSpecial = btn.dataset.mood !== 'default';
+        btn.classList.toggle('is-cooldown', onCooldown && isSpecial);
+      });
+    }
+    if (!onCooldown && moodCooldownInterval) {
+      clearInterval(moodCooldownInterval);
+      moodCooldownInterval = null;
+    }
+  }
+
+  function startMoodCooldown(seconds = 5) {
+    const sec = Math.max(1, Number(seconds) || 5);
+    moodCooldownUntil = Date.now() + sec * 1000;
+    updateMoodCooldownUI();
+    if (moodCooldownInterval) clearInterval(moodCooldownInterval);
+    moodCooldownInterval = setInterval(updateMoodCooldownUI, 250);
+  }
+
   function setMessageMood(mood) {
-    state.messageMood = mood || 'default';
+    const target = mood || 'default';
+    if (target !== 'default' && Date.now() < moodCooldownUntil) {
+      const waitSec = Math.ceil((moodCooldownUntil - Date.now()) / 1000);
+      showToast(`Message Card Mood cooldown: ready in ${waitSec}s (Clean messages stay instant).`, 'warning', 2200);
+      return;
+    }
+    state.messageMood = target;
     if (beautifyMoodRow) {
       beautifyMoodRow.querySelectorAll('.beautify-mood-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mood === state.messageMood);

@@ -13,13 +13,25 @@ function formatUpdateLabel(version) {
   return SEMVER_REGEX.test(clean) ? `Update ${clean}` : `Update 1.0.0`;
 }
 
-// Chronological newest-first changelog so the active release leads and commit 50695b6 sits as Update 2 on the webpage
+// Chronological newest-first changelog so the active release leads and commit 50695b6 sits cleanly in history
 const RELEASE_HISTORY = [
+  {
+    version: '1.4.0',
+    label: formatUpdateLabel('1.4.0'),
+    updateNumber: 4,
+    commit: 'latest',
+    title: 'Animated Message Card Moods, 3s Soundscapes & Light Theme Visibility',
+    highlights: [
+      'Upgraded Calm Note (wind, swirling leaves, storm, thunder & lightning), Spotlight (LED uplights, waving spotlights & inner glow), and Greeting (endless confetti, top-left party hat & proportionate sun rays) into endless behind-text bubble animations',
+      'Made all Message Card Mood effects clearly visible across both Serene Light and Midnight Dark themes',
+      'Added bespoke 3-second fading audio effects per mood plus a dedicated 5-second Message Card Mood cooldown'
+    ]
+  },
   {
     version: '1.3.0',
     label: formatUpdateLabel('1.3.0'),
     updateNumber: 3,
-    commit: 'latest',
+    commit: 'be3aaea',
     title: 'App Updates History & Semantic Versioning',
     highlights: [
       'Always synchronizes App Updates with each release using strict "Update x.y.z" semantic versioning',

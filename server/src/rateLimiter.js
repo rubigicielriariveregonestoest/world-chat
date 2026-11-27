@@ -8,11 +8,13 @@
 const textTimestamps = new Map(); // key -> last message timestamp
 const imageTimestamps = new Map(); // key -> last image timestamp
 const avatarTimestamps = new Map(); // key -> last avatar update timestamp
+const moodTimestamps = new Map(); // key -> last Message Card Mood timestamp
 const lastUserMessages = new Map(); // key -> last text content
 
 const TEXT_COOLDOWN_MS = 1500; // 1.5 seconds between text messages
 const IMAGE_COOLDOWN_MS = 15000; // 15 seconds between image uploads
 const AVATAR_COOLDOWN_MS = 3000; // 3 seconds between profile photo changes
+const MOOD_COOLDOWN_MS = 5000; // 5 seconds between Message Card Mood animations
 
 /*
  * Periodic Memory Eviction
@@ -30,6 +32,9 @@ setInterval(() => {
   }
   for (const [key, ts] of avatarTimestamps.entries()) {
     if (now - ts > 60000) avatarTimestamps.delete(key);
+  }
+  for (const [key, ts] of moodTimestamps.entries()) {
+    if (now - ts > 60000) moodTimestamps.delete(key);
   }
   for (const [key, entry] of lastUserMessages.entries()) {
     if (now - entry.time > 60000) lastUserMessages.delete(key);
@@ -95,5 +100,24 @@ module.exports = {
 
   recordAvatar(clientId) {
     avatarTimestamps.set(clientId, Date.now());
+  },
+
+  checkMoodLimit(clientId) {
+    const now = Date.now();
+    const last = moodTimestamps.get(clientId) || 0;
+    const diff = now - last;
+    if (diff < MOOD_COOLDOWN_MS) {
+      const waitSeconds = Math.ceil((MOOD_COOLDOWN_MS - diff) / 1000);
+      return {
+        allowed: false,
+        waitSeconds,
+        reason: `Message Card Mood cooldown: Please wait ${waitSeconds}s before using another mood effect.`
+      };
+    }
+    return { allowed: true };
+  },
+
+  recordMood(clientId) {
+    moodTimestamps.set(clientId, Date.now());
   }
 };
