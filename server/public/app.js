@@ -569,16 +569,70 @@
   const NOUNS = ['Pulsar', 'Voyager', 'Comet', 'Falcon', 'Orion', 'Nomad', 'Spark', 'Phoenix', 'Star', 'Specter', 'Drifter', 'Echo'];
 
   const DISTINGUISHED_USER_ICONS = ['🌟', '🚀', '🌙', '☀️', '🪐', '🔥', '⚡', '🧭', '🦋', '🦊', '🐬', '💎'];
-  const CLIENT_APP_VERSION = '1.1.0';
+  const CLIENT_APP_VERSION = '1.3.0';
+
+  function formatUpdateLabel(version) {
+    const clean = String(version || '').trim().replace(/^v/i, '');
+    return /^\d+\.\d+\.\d+$/.test(clean) ? `Update ${clean}` : `Update ${CLIENT_APP_VERSION}`;
+  }
+
+  const DEFAULT_RELEASE_HISTORY = [
+    {
+      version: '1.3.0',
+      label: formatUpdateLabel('1.3.0'),
+      updateNumber: 3,
+      commit: 'latest',
+      title: 'App Updates History & Semantic Versioning',
+      highlights: [
+        'Always synchronizes App Updates with each release using strict "Update x.y.z" semantic versioning',
+        'Added full History of Changes timeline inside Settings -> App Updates',
+        'Recorded commit 50695b6 (Update 1.2.0) directly in the App Updates timeline'
+      ]
+    },
+    {
+      version: '1.2.0',
+      label: formatUpdateLabel('1.2.0'),
+      updateNumber: 2,
+      commit: '50695b6',
+      title: 'Theme Widget Isolation, Owner Delete, Reminders & Resilient Avatars',
+      highlights: [
+        'Isolated customized Color Widgets per theme (Midnight Dark vs. Serene Light) so neither overrides the other',
+        'Added owner-only message deletion with accidental-tap confirmation and clean consecutive group promotion',
+        'Added caring, non-scary upload reminders plus >5 MB auto-resize, flexible image formats, and ephemeral-proof avatars'
+      ]
+    },
+    {
+      version: '1.1.0',
+      label: formatUpdateLabel('1.1.0'),
+      updateNumber: 1,
+      commit: 'be99c11',
+      title: 'Left Bubble Avatars, Distinguished User Icons & Update Notice Popup',
+      highlights: [
+        'Moved user profile photos onto the left side of chat bubbles paired with each user\'s distinguished icon',
+        'Added selectable distinguished icons in Customize Profile & Widgets',
+        'Introduced the live Update Notice Popup and Settings -> App Updates checker'
+      ]
+    },
+    {
+      version: '1.0.0',
+      label: formatUpdateLabel('1.0.0'),
+      updateNumber: 0,
+      commit: '794c42b',
+      title: 'Trust & Calm Neomorphism Foundation',
+      highlights: [
+        'Midnight Harbor Dark & Serene Alabaster Light 3D neomorphic dome styling',
+        'Pre-send message beautifier, animated Noto Color Emoji reactions, and custom profile photos'
+      ]
+    }
+  ];
+
   const DEFAULT_RELEASE_INFO = {
     version: CLIENT_APP_VERSION,
+    label: formatUpdateLabel(CLIENT_APP_VERSION),
     buildId: '',
-    title: 'World Chat Update Available',
-    highlights: [
-      'Profile photos & distinguished user icons now appear on the left side of every chat bubble',
-      'Choose your own distinguished icon inside Customize Profile & Widgets',
-      'Restored 3D convex neomorphic chat bubbles with matched surrounding color shadows'
-    ]
+    title: `World Chat ${formatUpdateLabel(CLIENT_APP_VERSION)} Available`,
+    highlights: DEFAULT_RELEASE_HISTORY[0].highlights,
+    history: DEFAULT_RELEASE_HISTORY
   };
 
   function pickDefaultUserIcon(seed) {
@@ -806,6 +860,7 @@
   const updateVersionBadge = document.getElementById('update-version-badge');
   const updateNoticeSubtitle = document.getElementById('update-notice-subtitle');
   const updateHighlightsList = document.getElementById('update-highlights-list');
+  const updateHistoryList = document.getElementById('update-history-list');
 
   const widgetAccentPicker = document.getElementById('widget-accent-picker');
   const widgetIncomingPicker = document.getElementById('widget-incoming-picker');
@@ -1284,26 +1339,78 @@
    * on connection and routes live history, chat broadcasts, reactions, and typing.
    */
   /*
-   * Update Notice Popup & Live Version Monitor
-   * Tracks server release metadata pushed via Socket.IO and /api/version,
-   * displays the Update Notice Popup on new releases or live server deploys,
-   * and executes a clean update/reload action when the user clicks Update Now.
+   * Update Notice Popup, Release History & Live Version Monitor
+   * Tracks server release metadata pushed via Socket.IO and /api/version, renders
+   * strict "Update x.y.z" semantic version badges plus the Settings History of
+   * Changes timeline, and applies live updates cleanly on Update button click.
    */
   let activeReleaseInfo = { ...DEFAULT_RELEASE_INFO };
   let initialServerBuildId = '';
   let liveUpdateAvailable = false;
 
+  function renderUpdateHistoryList(historyItems) {
+    if (!updateHistoryList) return;
+    updateHistoryList.innerHTML = '';
+    const entries = Array.isArray(historyItems) && historyItems.length > 0
+      ? historyItems
+      : DEFAULT_RELEASE_HISTORY;
+
+    entries.forEach((entry, index) => {
+      const card = document.createElement('div');
+      card.className = 'update-history-item';
+
+      const header = document.createElement('div');
+      header.className = 'update-history-header';
+
+      const verSpan = document.createElement('span');
+      verSpan.className = 'update-history-ver';
+      verSpan.textContent = formatUpdateLabel(entry.version);
+      header.appendChild(verSpan);
+
+      const badgeText = (entry.commit && entry.commit !== 'latest')
+        ? `#${entry.commit}`
+        : (index === 0 ? 'Latest' : `Update ${entry.version || ''}`);
+      const commitSpan = document.createElement('span');
+      commitSpan.className = 'update-history-commit';
+      commitSpan.textContent = badgeText;
+      header.appendChild(commitSpan);
+
+      card.appendChild(header);
+
+      if (entry.title) {
+        const titleEl = document.createElement('div');
+        titleEl.className = 'update-history-title';
+        titleEl.textContent = String(entry.title);
+        card.appendChild(titleEl);
+      }
+
+      if (Array.isArray(entry.highlights) && entry.highlights.length > 0) {
+        const ul = document.createElement('ul');
+        ul.className = 'update-history-bullets';
+        entry.highlights.forEach((line) => {
+          const li = document.createElement('li');
+          li.textContent = String(line);
+          ul.appendChild(li);
+        });
+        card.appendChild(ul);
+      }
+
+      updateHistoryList.appendChild(card);
+    });
+  }
+
   function openUpdateNoticeModal(release = activeReleaseInfo, isLiveUpdate = liveUpdateAvailable) {
     if (!updateNoticeModal) return;
     const info = release && release.version ? release : DEFAULT_RELEASE_INFO;
+    const updateLabel = formatUpdateLabel(info.version);
 
     if (updateVersionBadge) {
-      updateVersionBadge.innerText = `v${info.version}`;
+      updateVersionBadge.innerText = updateLabel;
     }
     if (updateNoticeSubtitle) {
       updateNoticeSubtitle.innerText = isLiveUpdate
-        ? `World Chat v${info.version} is live on the server. Click Update Now to load the latest version.`
-        : `Welcome to World Chat v${info.version}! Review what changed and click Update Now to confirm.`;
+        ? `World Chat ${updateLabel} is live on the server. Click Update Now to load the latest version.`
+        : `Welcome to World Chat ${updateLabel}! Review the latest features and History of Changes below.`;
     }
     if (updateHighlightsList) {
       updateHighlightsList.innerHTML = '';
@@ -1316,6 +1423,8 @@
         updateHighlightsList.appendChild(li);
       });
     }
+    renderUpdateHistoryList(info.history);
+
     if (confirmUpdateBtn) {
       confirmUpdateBtn.disabled = false;
       confirmUpdateBtn.innerText = isLiveUpdate ? 'Update Now' : 'Apply Update';
@@ -1344,7 +1453,7 @@
     liveUpdateAvailable = versionChanged || buildChanged;
 
     if (dropdownVersionBadge) {
-      dropdownVersionBadge.innerText = liveUpdateAvailable ? 'New!' : `v${release.version}`;
+      dropdownVersionBadge.innerText = liveUpdateAvailable ? 'New Update' : formatUpdateLabel(release.version);
       dropdownVersionBadge.className = liveUpdateAvailable ? 'dropdown-item-badge off' : 'dropdown-item-badge on';
     }
 
@@ -1407,7 +1516,7 @@
           if (updateNoticeModal) updateNoticeModal.classList.add('hidden');
           confirmUpdateBtn.disabled = false;
           confirmUpdateBtn.innerText = 'Apply Update';
-          showToast(`World Chat updated to v${targetVersion}!`, 'info');
+          showToast(`World Chat updated to ${formatUpdateLabel(targetVersion)}!`, 'info');
         }, 320);
       }
     });

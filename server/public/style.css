@@ -3549,7 +3549,71 @@ body {
 }
 
 .update-modal-box {
-  max-width: 430px;
+  max-width: 470px;
+}
+
+.update-history-section {
+  margin-top: 14px;
+}
+
+.update-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 210px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.update-history-item {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: inset 2px 2px 5px var(--neo-inset-dark), inset -1px -1px 3px var(--neo-inset-light);
+}
+
+.update-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.update-history-ver {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--accent-cyan);
+}
+
+.update-history-commit {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--accent-calm);
+  border: 1px solid var(--border-color);
+}
+
+.update-history-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 5px;
+}
+
+.update-history-bullets {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--text-muted);
 }
 
 .update-icon-pod {

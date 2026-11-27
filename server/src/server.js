@@ -8,25 +8,16 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
-const pkg = require('../package.json');
+const { buildReleaseInfo } = require('./releases');
 const uploadRoutes = require('./upload');
 const registerSocketHandlers = require('./socketHandler');
 
 /*
  * Application Release & Version Manifest
- * Exposes the active server version, boot buildId, and release highlights via
- * GET /api/version and Socket.IO so connected tabs can prompt users to update.
+ * Derives active server version, buildId, release highlights, and full changelog
+ * history from releases.js for GET /api/version and Socket.IO broadcasts.
  */
-const RELEASE_INFO = {
-  version: pkg.version || '1.1.0',
-  buildId: `${pkg.version || '1.1.0'}-${Date.now().toString(36)}`,
-  title: 'World Chat Update Available',
-  highlights: [
-    'Profile photos & distinguished user icons now appear on the left side of chat bubbles',
-    'Pick your own distinguished icon inside Customize Profile & Widgets',
-    'Restored 3D convex neomorphic chat bubbles with matched surrounding color shadows'
-  ]
-};
+const RELEASE_INFO = buildReleaseInfo();
 
 const app = express();
 const server = http.createServer(app);
