@@ -485,18 +485,46 @@
     SoundFX.receiveMessage();
   }
 
-  // --- Palettes & Generators ---
+  // --- Palettes & Generators (Trust & Calm Color Psychology) ---
   const COLOR_PALETTE = [
-    '#f59e0b', // Warm Honey Amber
-    '#22c55e', // Emerald
-    '#a855f7', // Electric Purple
-    '#f43f5e', // Rose
-    '#fbbf24', // Amber
-    '#06b6d4', // Aqua
-    '#ec4899', // Pink
-    '#3b82f6', // Royal Blue
-    '#10b981'  // Teal
+    '#38bdf8', // Aurora Cerulean
+    '#2563eb', // Trust Sapphire
+    '#0d9488', // Balanced Sage Teal
+    '#2dd4bf', // Serene Seafoam
+    '#6366f1', // Calm Indigo
+    '#0284c7', // Clear Sky Blue
+    '#10b981', // Tranquil Emerald
+    '#8b5cf6', // Twilight Lavender
+    '#64748b'  // Structured Slate
   ];
+
+  const WIDGET_SWATCHES = {
+    accent: ['#38bdf8', '#2563eb', '#0d9488', '#6366f1', '#14b8a6', '#0284c7'],
+    incomingDark: ['#253042', '#1f2937', '#263340', '#2b3245', '#1d2d35'],
+    incomingLight: ['#f4f7fb', '#edf2f7', '#eef6f5', '#f1f0fb', '#f8fafc'],
+    outgoingDark: ['#1e3b5a', '#164e63', '#1e3a8a', '#134e4a', '#2e2a5e'],
+    outgoingLight: ['#dbe8f8', '#d5f0ec', '#e0e7ff', '#d1fae5', '#e0f2fe'],
+    surfaceDark: ['#212b3c', '#1c2536', '#1e2f38', '#23283d', '#1f2937'],
+    surfaceLight: ['#eef3fa', '#e6eef8', '#eaf4f4', '#edeff8', '#f1f5f9']
+  };
+
+  function loadSavedWidgetColors() {
+    try {
+      const raw = localStorage.getItem('wc_widget_colors');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          return {
+            accent: parsed.accent || '',
+            incoming: parsed.incoming || '',
+            outgoing: parsed.outgoing || '',
+            surface: parsed.surface || ''
+          };
+        }
+      }
+    } catch (_) {}
+    return { accent: '', incoming: '', outgoing: '', surface: '' };
+  }
 
   const ADJECTIVES = ['Cosmic', 'Starlight', 'Astro', 'Nova', 'Nebula', 'Eclipse', 'Quantum', 'Solar', 'Zenith', 'Celestial', 'Lunar', 'Astral'];
   const NOUNS = ['Pulsar', 'Voyager', 'Comet', 'Falcon', 'Orion', 'Nomad', 'Spark', 'Phoenix', 'Star', 'Specter', 'Drifter', 'Echo'];
@@ -530,6 +558,8 @@
       }
       return 'neomorphism-dark';
     })(),
+    widgetColors: loadSavedWidgetColors(),
+    messageMood: 'default',
     stagedFile: null,
     stagedFileUrl: null,
     replyTo: null,
@@ -566,7 +596,25 @@
     timer: `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" class="neo-icon"><path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>`,
     upload: `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" class="neo-icon"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>`,
     alertTriangle: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="neo-icon"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>`,
-    info: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="neo-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`
+    info: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="neo-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`,
+    react: `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" class="neo-icon"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>`
+  };
+
+  // --- Animated SVG Reactions Registry (Zero Raw Emojis) ---
+  const REACTION_TYPES = ['heart', 'haha', 'wow', 'sad', 'angry'];
+  const REACTION_LABELS = {
+    heart: 'Heart',
+    haha: 'Haha',
+    wow: 'Wow',
+    sad: 'Sad',
+    angry: 'Angry'
+  };
+  const ReactionIcons = {
+    heart: `<svg viewBox="0 0 24 24" class="reaction-svg react-heart" aria-hidden="true"><defs><linearGradient id="rg-heart" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fb7185"/><stop offset="100%" stop-color="#e11d48"/></linearGradient></defs><path fill="url(#rg-heart)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/><circle cx="7.5" cy="7.5" r="1.4" fill="rgba(255,255,255,0.55)"/></svg>`,
+    haha: `<svg viewBox="0 0 24 24" class="reaction-svg react-haha" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fbbf24"/><path d="M7.2 9.8c.7-.9 1.9-.9 2.6 0M14.2 9.8c.7-.9 1.9-.9 2.6 0" stroke="#78350f" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M7.5 13.5c1.1 2.7 3 4 4.5 4s3.4-1.3 4.5-4H7.5z" fill="#78350f"/><path d="M9.4 16c.8.8 1.7 1.2 2.6 1.2s1.8-.4 2.6-1.2c-.8-.6-1.7-.9-2.6-.9s-1.8.3-2.6.9z" fill="#fb7185"/></svg>`,
+    wow: `<svg viewBox="0 0 24 24" class="reaction-svg react-wow" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fcd34d"/><path d="M7.5 8.2c.8-.6 1.6-.6 2.2 0M14.3 8.2c.8-.6 1.6-.6 2.2 0" stroke="#78350f" stroke-width="1.5" stroke-linecap="round" fill="none"/><circle cx="8.8" cy="10.8" r="1.35" fill="#78350f"/><circle cx="15.2" cy="10.8" r="1.35" fill="#78350f"/><ellipse cx="12" cy="16" rx="2.1" ry="2.8" fill="#78350f"/></svg>`,
+    sad: `<svg viewBox="0 0 24 24" class="reaction-svg react-sad" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#60a5fa"/><circle cx="8.6" cy="10.5" r="1.3" fill="#1e3a8a"/><circle cx="15.4" cy="10.5" r="1.3" fill="#1e3a8a"/><path d="M8.5 16.4c1.1-1.3 2.3-1.8 3.5-1.8s2.4.5 3.5 1.8" stroke="#1e3a8a" stroke-width="1.8" stroke-linecap="round" fill="none"/><path class="sad-tear" d="M16.5 12.2c.8 1.2 1.2 2.1 1.2 2.8a1.2 1.2 0 1 1-2.4 0c0-.7.4-1.6 1.2-2.8z" fill="#e0f2fe"/></svg>`,
+    angry: `<svg viewBox="0 0 24 24" class="reaction-svg react-angry" aria-hidden="true"><defs><linearGradient id="rg-angry" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f97316"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><circle cx="12" cy="12" r="10" fill="url(#rg-angry)"/><path d="M7.2 8.5l3.2 1.5M16.8 8.5l-3.2 1.5" stroke="#450a0a" stroke-width="1.9" stroke-linecap="round"/><circle cx="8.8" cy="11.5" r="1.25" fill="#450a0a"/><circle cx="15.2" cy="11.5" r="1.25" fill="#450a0a"/><path d="M8.8 16.2c1-.9 2.1-1.3 3.2-1.3s2.2.4 3.2 1.3" stroke="#450a0a" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>`
   };
 
   // --- DOM Elements ---
@@ -578,6 +626,7 @@
   const dropdownUserAvatar = document.getElementById('dropdown-user-avatar');
   const dropdownUserName = document.getElementById('dropdown-user-name');
   const editProfileBtn = document.getElementById('edit-profile-btn');
+  const openWidgetsBtn = document.getElementById('open-widgets-btn');
   const toggleSoundBtn = document.getElementById('toggle-sound-btn');
   const toggleBlurBtn = document.getElementById('toggle-blur-btn');
   const safeModeIcon = document.getElementById('safe-mode-icon');
@@ -611,6 +660,12 @@
   const chatInputBubble = document.getElementById('chat-input-bubble');
   const messageInput = document.getElementById('message-input');
   const charCounter = document.getElementById('char-counter');
+  const beautifyWrapper = document.getElementById('beautify-wrapper');
+  const beautifyBtn = document.getElementById('beautify-btn');
+  const beautifyMoodDot = document.getElementById('beautify-mood-dot');
+  const beautifyPopover = document.getElementById('beautify-popover');
+  const polishMsgBtn = document.getElementById('polish-msg-btn');
+  const beautifyMoodRow = document.getElementById('beautify-mood-row');
   const attachBtn = document.getElementById('attach-btn');
   const plusBtn = document.getElementById('plus-btn');
   const actionsPopup = document.getElementById('actions-popup');
@@ -624,11 +679,27 @@
 
   const profileModal = document.getElementById('profile-modal');
   const closeProfileModalBtn = document.getElementById('close-profile-modal');
+  const tabIdentityBtn = document.getElementById('tab-identity-btn');
+  const tabWidgetsBtn = document.getElementById('tab-widgets-btn');
+  const tabIdentityPanel = document.getElementById('tab-identity-panel');
+  const tabWidgetsPanel = document.getElementById('tab-widgets-panel');
   const customNameInput = document.getElementById('custom-name-input');
   const colorPaletteEl = document.getElementById('color-palette');
   const saveProfileBtn = document.getElementById('save-profile-btn');
   const modalPreviewAvatar = document.getElementById('modal-preview-avatar');
   const modalPreviewName = document.getElementById('modal-preview-name');
+
+  const widgetAccentPicker = document.getElementById('widget-accent-picker');
+  const widgetIncomingPicker = document.getElementById('widget-incoming-picker');
+  const widgetOutgoingPicker = document.getElementById('widget-outgoing-picker');
+  const widgetSurfacePicker = document.getElementById('widget-surface-picker');
+  const widgetAccentSwatches = document.getElementById('widget-accent-swatches');
+  const widgetIncomingSwatches = document.getElementById('widget-incoming-swatches');
+  const widgetOutgoingSwatches = document.getElementById('widget-outgoing-swatches');
+  const widgetSurfaceSwatches = document.getElementById('widget-surface-swatches');
+  const previewIncomingBubble = document.getElementById('preview-incoming-bubble');
+  const previewOutgoingBubble = document.getElementById('preview-outgoing-bubble');
+  const resetWidgetsBtn = document.getElementById('reset-widgets-btn');
 
   const lightboxModal = document.getElementById('lightbox-modal');
   const lightboxImg = document.getElementById('lightbox-img');
@@ -638,6 +709,7 @@
   const toastContainer = document.getElementById('toast-container');
 
   let modalSelectedColor = state.color;
+  let modalWidgetColors = { ...state.widgetColors };
 
   // --- Toast Notifications ---
   function showToast(message, type = 'info', duration = 3500) {
@@ -708,6 +780,76 @@
     }
   }
 
+  // --- Color Widget Contrast & Styling Helpers ---
+  function isValidHexColor(hex) {
+    return /^#([0-9a-fA-F]{6})$/.test(String(hex || '').trim());
+  }
+
+  function hexToRgb(hex) {
+    const clean = hex.replace('#', '');
+    return {
+      r: parseInt(clean.substring(0, 2), 16),
+      g: parseInt(clean.substring(2, 4), 16),
+      b: parseInt(clean.substring(4, 6), 16)
+    };
+  }
+
+  function computeContrastText(hex) {
+    if (!isValidHexColor(hex)) return '#f1f5f9';
+    const { r, g, b } = hexToRgb(hex);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.56 ? '#0f172a' : '#f8fafc';
+  }
+
+  function adjustHexColor(hex, delta) {
+    if (!isValidHexColor(hex)) return hex;
+    const { r, g, b } = hexToRgb(hex);
+    const clamp = v => Math.max(0, Math.min(255, v));
+    const toHex = v => clamp(v).toString(16).padStart(2, '0');
+    return `#${toHex(r + delta)}${toHex(g + delta)}${toHex(b + delta)}`;
+  }
+
+  function applyWidgetColors(colorsObj = state.widgetColors) {
+    const root = document.documentElement;
+    const isLight = state.theme === 'neomorphism-light';
+
+    if (isValidHexColor(colorsObj.accent)) {
+      root.style.setProperty('--accent-cyan', colorsObj.accent);
+      root.style.setProperty('--accent-hover', adjustHexColor(colorsObj.accent, isLight ? -16 : 18));
+      root.style.setProperty('--accent-btn-text', computeContrastText(colorsObj.accent));
+    } else {
+      root.style.removeProperty('--accent-cyan');
+      root.style.removeProperty('--accent-hover');
+      root.style.removeProperty('--accent-btn-text');
+    }
+
+    if (isValidHexColor(colorsObj.incoming)) {
+      const shaded = adjustHexColor(colorsObj.incoming, isLight ? -6 : -10);
+      root.style.setProperty('--bubble-incoming-bg', `linear-gradient(145deg, ${colorsObj.incoming}, ${shaded})`);
+      root.style.setProperty('--bubble-incoming-text', computeContrastText(colorsObj.incoming));
+    } else {
+      root.style.removeProperty('--bubble-incoming-bg');
+      root.style.removeProperty('--bubble-incoming-text');
+    }
+
+    if (isValidHexColor(colorsObj.outgoing)) {
+      const shaded = adjustHexColor(colorsObj.outgoing, isLight ? -8 : -12);
+      root.style.setProperty('--bubble-outgoing-bg', `linear-gradient(145deg, ${colorsObj.outgoing}, ${shaded})`);
+      root.style.setProperty('--bubble-outgoing-text', computeContrastText(colorsObj.outgoing));
+    } else {
+      root.style.removeProperty('--bubble-outgoing-bg');
+      root.style.removeProperty('--bubble-outgoing-text');
+    }
+
+    if (isValidHexColor(colorsObj.surface)) {
+      root.style.setProperty('--widget-surface-bg', colorsObj.surface);
+      root.style.setProperty('--widget-surface-hover', adjustHexColor(colorsObj.surface, isLight ? 8 : 10));
+    } else {
+      root.style.removeProperty('--widget-surface-bg');
+      root.style.removeProperty('--widget-surface-hover');
+    }
+  }
+
   function applyTheme(theme) {
     const activeTheme = (theme === 'neomorphism-light' || theme === 'neomorphism' || theme === 'light')
       ? 'neomorphism-light'
@@ -733,6 +875,8 @@
         }
       }
     }
+
+    applyWidgetColors(state.widgetColors);
 
     if (window.setCelestialTheme) {
       window.setCelestialTheme(activeTheme);
@@ -781,6 +925,14 @@
     }
   });
 
+  socket.on('chat:reaction_update', (payload) => {
+    if (!payload || !payload.messageId) return;
+    const msgEl = messagesList.querySelector(`[data-msg-id="${payload.messageId}"]`);
+    if (msgEl) {
+      renderMessageReactions(msgEl, payload.reactions, true);
+    }
+  });
+
   socket.on('typing:update', (data) => {
     const typers = (data.typingUsers || []).filter(name => name !== state.username);
     if (typers.length === 0) {
@@ -814,6 +966,73 @@
     }
   }
 
+  function formatSafeRichText(rawText) {
+    if (!rawText) return '';
+    // Raw text from server is already HTML-escaped by sanitizeText; apply safe inline formatting & links
+    let out = String(rawText);
+    out = out.replace(/`([^`\n]+?)`/g, '<code class="fmt-mono">$1</code>');
+    out = out.replace(/\*\*([^*\n]+?)\*\*/g, '<strong class="fmt-bold">$1</strong>');
+    out = out.replace(/\*([^*\n]+?)\*/g, '<em class="fmt-italic">$1</em>');
+    out = out.replace(/==([^=\n]+?)==/g, '<mark class="fmt-highlight">$1</mark>');
+    out = out.replace(
+      /(https?:\/\/[^\s<]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+    return out;
+  }
+
+  function renderMessageReactions(msgEl, reactions = {}, burstAnimate = false) {
+    const row = msgEl.querySelector('.msg-reactions-row');
+    if (!row) return;
+
+    const previousCounts = {};
+    row.querySelectorAll('.reaction-pill').forEach(btn => {
+      previousCounts[btn.dataset.reaction] = Number(btn.dataset.count || 0);
+    });
+
+    row.innerHTML = '';
+    const msgId = msgEl.dataset.msgId;
+    if (!msgId) return;
+
+    let hasAny = false;
+    REACTION_TYPES.forEach(type => {
+      const users = Array.isArray(reactions[type]) ? reactions[type] : [];
+      if (users.length === 0) return;
+      hasAny = true;
+
+      const isActive = users.includes(state.userId);
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = `reaction-pill ${isActive ? 'active' : ''}`;
+      if (burstAnimate && users.length !== (previousCounts[type] || 0)) {
+        pill.classList.add('is-burst');
+      }
+      pill.dataset.reaction = type;
+      pill.dataset.count = String(users.length);
+      pill.title = `${REACTION_LABELS[type]} (${users.length})`;
+      pill.innerHTML = `${ReactionIcons[type]}<span>${users.length}</span>`;
+
+      pill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        SoundFX.click();
+        socket.emit('chat:react', { messageId: msgId, reaction: type });
+      });
+
+      row.appendChild(pill);
+    });
+
+    row.classList.toggle('hidden', !hasAny);
+  }
+
+  function closeAllReactionPickers() {
+    document.querySelectorAll('.reaction-picker').forEach(el => el.remove());
+    document.querySelectorAll('.msg-react-btn.active').forEach(el => el.classList.remove('active'));
+  }
+
+  document.addEventListener('click', () => {
+    closeAllReactionPickers();
+  });
+
   function appendMessage(msg, isOwn = false) {
     const item = document.createElement('div');
     const senderId = msg.userId || msg.username || 'guest';
@@ -832,12 +1051,10 @@
     }
 
     const formattedTime = formatTimestamp(msg.timestamp);
+    const formattedText = formatSafeRichText(msg.text || '');
 
-    // Auto-link URLs in text safely
-    let formattedText = (msg.text || '').replace(
-      /(https?:\/\/[^\s]+)/g,
-      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
-    );
+    const allowedMoods = ['calm', 'spotlight', 'greeting'];
+    const moodClass = allowedMoods.includes(msg.styleVariant) ? `mood-${msg.styleVariant}` : '';
 
     let imageHtml = '';
     if (msg.imageUrl) {
@@ -854,7 +1071,7 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    const safeAuthorColor = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#f59e0b';
+    const safeAuthorColor = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#38bdf8';
 
     // Render author name externally above the bubble row (omitted on consecutive messages from the same sender)
     const authorHtml = !isConsecutive
@@ -908,21 +1125,63 @@
       `;
     }
 
-    // Floating cloud bubble with external timestamp & reply button
+    // Floating cloud bubble with reactions row, external timestamp, react & reply buttons
     item.innerHTML = `
       ${authorHtml}
       <div class="msg-bubble-row">
-        <div class="msg-cloud-bubble">
-          ${replyQuoteHtml}
-          ${formattedText ? `<div class="msg-text">${formattedText}</div>` : ''}
-          ${imageHtml}
+        <div class="msg-bubble-col">
+          <div class="msg-cloud-bubble ${moodClass}">
+            ${replyQuoteHtml}
+            ${formattedText ? `<div class="msg-text">${formattedText}</div>` : ''}
+            ${imageHtml}
+          </div>
+          <div class="msg-reactions-row hidden"></div>
         </div>
         <span class="msg-time-external">${formattedTime}</span>
+        <button type="button" class="msg-react-btn" title="React to message" aria-label="React">
+          <span>${Icons.react}</span>
+        </button>
         <button type="button" class="msg-reply-btn" title="Reply to this message" aria-label="Reply">
           <span class="reply-btn-icon">${Icons.reply}</span>
         </button>
       </div>
     `;
+
+    // Populate any existing reactions from history
+    renderMessageReactions(item, msg.reactions || {});
+
+    // Click handler for react button (opens animated picker above/beside bubble)
+    const reactBtn = item.querySelector('.msg-react-btn');
+    const bubbleCol = item.querySelector('.msg-bubble-col');
+    if (reactBtn && bubbleCol && msg.id) {
+      reactBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const alreadyOpen = bubbleCol.querySelector('.reaction-picker');
+        closeAllReactionPickers();
+        if (alreadyOpen) return;
+
+        SoundFX.menuOpen();
+        reactBtn.classList.add('active');
+        const picker = document.createElement('div');
+        picker.className = 'reaction-picker';
+        REACTION_TYPES.forEach(type => {
+          const pickBtn = document.createElement('button');
+          pickBtn.type = 'button';
+          pickBtn.className = 'reaction-pick-btn';
+          pickBtn.title = REACTION_LABELS[type];
+          pickBtn.setAttribute('aria-label', REACTION_LABELS[type]);
+          pickBtn.innerHTML = ReactionIcons[type];
+          pickBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            SoundFX.click();
+            socket.emit('chat:react', { messageId: msg.id, reaction: type });
+            closeAllReactionPickers();
+          });
+          picker.appendChild(pickBtn);
+        });
+        bubbleCol.insertBefore(picker, bubbleCol.firstChild);
+      });
+    }
 
     // Click handler for reply button
     const replyBtn = item.querySelector('.msg-reply-btn');
@@ -1262,6 +1521,7 @@
     socket.emit('chat:send', {
       text,
       imageUrl: uploadedImageUrl,
+      styleVariant: state.messageMood || 'default',
       replyToId: state.replyTo ? state.replyTo.id : null
     });
 
@@ -1269,6 +1529,7 @@
     messageInput.value = '';
     charCounter.innerText = '0 / 350';
     charCounter.className = 'char-counter';
+    setMessageMood('default');
     clearAttachment();
     if (state.replyTo) {
       state.replyTo = null;
@@ -1280,6 +1541,120 @@
     sendBtn.innerHTML = sendBtnIconHtml;
     sendBtn.style.transform = 'translateY(-50%)';
     messageInput.focus();
+  }
+
+  // --- Message Beautifier Engine (Before Sending) ---
+  function setMessageMood(mood) {
+    state.messageMood = mood || 'default';
+    if (beautifyMoodRow) {
+      beautifyMoodRow.querySelectorAll('.beautify-mood-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mood === state.messageMood);
+      });
+    }
+    if (beautifyMoodDot) {
+      beautifyMoodDot.classList.toggle('hidden', state.messageMood === 'default');
+    }
+  }
+
+  function applyComposerFormat(type) {
+    const delimiters = {
+      bold: ['**', '**'],
+      italic: ['*', '*'],
+      highlight: ['==', '=='],
+      mono: ['`', '`']
+    };
+    const pair = delimiters[type];
+    if (!pair) return;
+
+    const start = messageInput.selectionStart ?? messageInput.value.length;
+    const end = messageInput.selectionEnd ?? messageInput.value.length;
+    const val = messageInput.value;
+    const selected = val.substring(start, end);
+    const wrapped = `${pair[0]}${selected || 'text'}${pair[1]}`;
+    const nextVal = val.substring(0, start) + wrapped + val.substring(end);
+
+    if (nextVal.length > 350) {
+      showToast('Formatted text exceeds 350 character limit.', 'error');
+      return;
+    }
+
+    messageInput.value = nextVal;
+    messageInput.focus();
+    const cursorStart = start + pair[0].length;
+    const cursorEnd = cursorStart + (selected ? selected.length : 4);
+    messageInput.setSelectionRange(cursorStart, cursorEnd);
+    messageInput.dispatchEvent(new Event('input'));
+    SoundFX.click();
+  }
+
+  function polishMessageText(str) {
+    let text = String(str || '').trim().replace(/\s{2,}/g, ' ');
+    if (!text) return '';
+    // Capitalize first letter and sentence starts neatly
+    text = text.charAt(0).toUpperCase() + text.slice(1);
+    text = text.replace(/([.!?]\s+)([a-z])/g, (_, sep, ch) => sep + ch.toUpperCase());
+    // Smart arrows and ellipses (ASCII/math glyphs only, zero emojis)
+    text = text.replace(/\s*->\s*/g, ' \u2192 ');
+    text = text.replace(/\.{4,}/g, '...');
+    return text.substring(0, 350);
+  }
+
+  if (beautifyBtn && beautifyPopover) {
+    beautifyBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = beautifyPopover.classList.contains('hidden');
+      if (isHidden) {
+        SoundFX.menuOpen();
+        beautifyPopover.classList.remove('hidden');
+        beautifyBtn.classList.add('active');
+        beautifyBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        SoundFX.menuClose();
+        beautifyPopover.classList.add('hidden');
+        beautifyBtn.classList.remove('active');
+        beautifyBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    beautifyPopover.querySelectorAll('.beautify-tool-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyComposerFormat(btn.dataset.format);
+      });
+    });
+
+    if (polishMsgBtn) {
+      polishMsgBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const polished = polishMessageText(messageInput.value);
+        if (!polished) {
+          showToast('Type a message first to polish it.', 'info');
+          return;
+        }
+        messageInput.value = polished;
+        messageInput.dispatchEvent(new Event('input'));
+        SoundFX.click();
+        showToast('Message polished!', 'info', 2000);
+      });
+    }
+
+    if (beautifyMoodRow) {
+      beautifyMoodRow.querySelectorAll('.beautify-mood-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          SoundFX.click();
+          setMessageMood(btn.dataset.mood);
+        });
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (beautifyWrapper && !beautifyWrapper.contains(e.target) && !beautifyPopover.classList.contains('hidden')) {
+        beautifyPopover.classList.add('hidden');
+        beautifyBtn.classList.remove('active');
+        beautifyBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
   }
 
   // --- Swipe-to-Send Gesture Engine & Click Feedback ---
@@ -1436,8 +1811,8 @@
       applyTheme(nextTheme);
       showToast(
         nextTheme === 'neomorphism-light'
-          ? 'Switched to Neomorphism Light (Creamy White)'
-          : 'Switched to Neomorphism Dark'
+          ? 'Switched to Neomorphism Light (Serene Alabaster)'
+          : 'Switched to Neomorphism Dark (Midnight Harbor)'
       );
     });
   }
@@ -1481,30 +1856,162 @@
     }
   });
 
-  // Open customization modal from the dropdown's Edit button
-  if (editProfileBtn) {
-    editProfileBtn.addEventListener('click', () => {
-      SoundFX.modalOpen();
-      profileDropdownMenu.classList.add('hidden');
-      profileBtn.classList.remove('active');
-      profileBtn.setAttribute('aria-expanded', 'false');
-      customNameInput.value = state.username;
-      modalSelectedColor = state.color;
-      renderColorPalette();
-      updateModalPreview();
-      profileModal.classList.remove('hidden');
+  function switchModalTab(tabName) {
+    const isWidgets = tabName === 'widgets';
+    if (tabIdentityBtn) {
+      tabIdentityBtn.classList.toggle('active', !isWidgets);
+      tabIdentityBtn.setAttribute('aria-selected', String(!isWidgets));
+    }
+    if (tabWidgetsBtn) {
+      tabWidgetsBtn.classList.toggle('active', isWidgets);
+      tabWidgetsBtn.setAttribute('aria-selected', String(isWidgets));
+    }
+    if (tabIdentityPanel) tabIdentityPanel.classList.toggle('hidden', isWidgets);
+    if (tabWidgetsPanel) tabWidgetsPanel.classList.toggle('hidden', !isWidgets);
+  }
+
+  function renderWidgetSwatches(containerEl, list, selectedHex, onPick) {
+    if (!containerEl) return;
+    containerEl.innerHTML = '';
+    list.forEach((hex, idx) => {
+      const sw = document.createElement('button');
+      sw.type = 'button';
+      sw.className = `widget-swatch ${selectedHex && selectedHex.toLowerCase() === hex.toLowerCase() ? 'selected' : ''}`;
+      sw.style.backgroundColor = hex;
+      sw.title = hex;
+      sw.addEventListener('click', () => {
+        SoundFX.colorSelect(idx);
+        onPick(hex);
+      });
+      containerEl.appendChild(sw);
     });
   }
 
-  closeProfileModalBtn.addEventListener('click', () => {
+  function updateWidgetControlsUI() {
+    const isLight = state.theme === 'neomorphism-light';
+    const incomingList = isLight ? WIDGET_SWATCHES.incomingLight : WIDGET_SWATCHES.incomingDark;
+    const outgoingList = isLight ? WIDGET_SWATCHES.outgoingLight : WIDGET_SWATCHES.outgoingDark;
+    const surfaceList = isLight ? WIDGET_SWATCHES.surfaceLight : WIDGET_SWATCHES.surfaceDark;
+
+    const defaultAccent = isLight ? '#2563eb' : '#38bdf8';
+    const defaultIncoming = isLight ? '#f4f7fb' : '#253042';
+    const defaultOutgoing = isLight ? '#dbe8f8' : '#1e3b5a';
+    const defaultSurface = isLight ? '#eef3fa' : '#212b3c';
+
+    if (widgetAccentPicker) widgetAccentPicker.value = isValidHexColor(modalWidgetColors.accent) ? modalWidgetColors.accent : defaultAccent;
+    if (widgetIncomingPicker) widgetIncomingPicker.value = isValidHexColor(modalWidgetColors.incoming) ? modalWidgetColors.incoming : defaultIncoming;
+    if (widgetOutgoingPicker) widgetOutgoingPicker.value = isValidHexColor(modalWidgetColors.outgoing) ? modalWidgetColors.outgoing : defaultOutgoing;
+    if (widgetSurfacePicker) widgetSurfacePicker.value = isValidHexColor(modalWidgetColors.surface) ? modalWidgetColors.surface : defaultSurface;
+
+    renderWidgetSwatches(widgetAccentSwatches, WIDGET_SWATCHES.accent, modalWidgetColors.accent, (hex) => {
+      modalWidgetColors.accent = hex;
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+    });
+    renderWidgetSwatches(widgetIncomingSwatches, incomingList, modalWidgetColors.incoming, (hex) => {
+      modalWidgetColors.incoming = hex;
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+    });
+    renderWidgetSwatches(widgetOutgoingSwatches, outgoingList, modalWidgetColors.outgoing, (hex) => {
+      modalWidgetColors.outgoing = hex;
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+    });
+    renderWidgetSwatches(widgetSurfaceSwatches, surfaceList, modalWidgetColors.surface, (hex) => {
+      modalWidgetColors.surface = hex;
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+    });
+
+    if (previewIncomingBubble) {
+      const inc = isValidHexColor(modalWidgetColors.incoming) ? modalWidgetColors.incoming : '';
+      previewIncomingBubble.style.background = inc || '';
+      previewIncomingBubble.style.color = inc ? computeContrastText(inc) : '';
+    }
+    if (previewOutgoingBubble) {
+      const out = isValidHexColor(modalWidgetColors.outgoing) ? modalWidgetColors.outgoing : '';
+      previewOutgoingBubble.style.background = out || '';
+      previewOutgoingBubble.style.color = out ? computeContrastText(out) : '';
+    }
+  }
+
+  function openCustomizationModal(initialTab = 'identity') {
+    SoundFX.modalOpen();
+    profileDropdownMenu.classList.add('hidden');
+    profileBtn.classList.remove('active');
+    profileBtn.setAttribute('aria-expanded', 'false');
+    customNameInput.value = state.username;
+    modalSelectedColor = state.color;
+    modalWidgetColors = { ...state.widgetColors };
+    renderColorPalette();
+    updateModalPreview();
+    updateWidgetControlsUI();
+    switchModalTab(initialTab);
+    profileModal.classList.remove('hidden');
+  }
+
+  // Open customization modal from the dropdown's Edit or Color Widgets buttons
+  if (editProfileBtn) {
+    editProfileBtn.addEventListener('click', () => openCustomizationModal('identity'));
+  }
+  if (openWidgetsBtn) {
+    openWidgetsBtn.addEventListener('click', () => openCustomizationModal('widgets'));
+  }
+
+  if (tabIdentityBtn) tabIdentityBtn.addEventListener('click', () => { SoundFX.click(); switchModalTab('identity'); });
+  if (tabWidgetsBtn) tabWidgetsBtn.addEventListener('click', () => { SoundFX.click(); switchModalTab('widgets'); });
+
+  if (widgetAccentPicker) {
+    widgetAccentPicker.addEventListener('input', (e) => {
+      modalWidgetColors.accent = e.target.value;
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+    });
+  }
+  if (widgetIncomingPicker) {
+    widgetIncomingPicker.addEventListener('input', (e) => {
+      modalWidgetColors.incoming = e.target.value;
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+    });
+  }
+  if (widgetOutgoingPicker) {
+    widgetOutgoingPicker.addEventListener('input', (e) => {
+      modalWidgetColors.outgoing = e.target.value;
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+    });
+  }
+  if (widgetSurfacePicker) {
+    widgetSurfacePicker.addEventListener('input', (e) => {
+      modalWidgetColors.surface = e.target.value;
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+    });
+  }
+
+  if (resetWidgetsBtn) {
+    resetWidgetsBtn.addEventListener('click', () => {
+      SoundFX.click();
+      modalWidgetColors = { accent: '', incoming: '', outgoing: '', surface: '' };
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+      showToast('Color widgets reset to calm defaults (click Save to keep)', 'info');
+    });
+  }
+
+  function closeAndRevertModalIfUnsaved() {
     SoundFX.modalClose();
+    applyWidgetColors(state.widgetColors);
     profileModal.classList.add('hidden');
-  });
+  }
+
+  closeProfileModalBtn.addEventListener('click', closeAndRevertModalIfUnsaved);
 
   profileModal.addEventListener('click', (e) => {
     if (e.target === profileModal) {
-      SoundFX.modalClose();
-      profileModal.classList.add('hidden');
+      closeAndRevertModalIfUnsaved();
     }
   });
 
@@ -1542,11 +2049,14 @@
 
     state.username = newName;
     state.color = modalSelectedColor;
+    state.widgetColors = { ...modalWidgetColors };
 
     localStorage.setItem('wc_username', state.username);
     localStorage.setItem('wc_color', state.color);
+    localStorage.setItem('wc_widget_colors', JSON.stringify(state.widgetColors));
 
     updateHeaderProfile();
+    applyWidgetColors(state.widgetColors);
     profileModal.classList.add('hidden');
 
     // Notify server of updated name/color
@@ -1557,7 +2067,7 @@
       userId: state.userId
     });
 
-    showToast('Profile updated!', 'info');
+    showToast('Profile & color widgets saved!', 'info');
   });
 
   // --- Lightbox Modal ---
@@ -1582,10 +2092,22 @@
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      const modalOpen = !lightboxModal.classList.contains('hidden') || !profileModal.classList.contains('hidden');
+      const profileWasOpen = !profileModal.classList.contains('hidden');
+      const modalOpen = !lightboxModal.classList.contains('hidden') || profileWasOpen;
       if (modalOpen) {
         SoundFX.modalClose();
       }
+      if (profileWasOpen) {
+        applyWidgetColors(state.widgetColors);
+      }
+      if (beautifyPopover && !beautifyPopover.classList.contains('hidden')) {
+        beautifyPopover.classList.add('hidden');
+        if (beautifyBtn) {
+          beautifyBtn.classList.remove('active');
+          beautifyBtn.setAttribute('aria-expanded', 'false');
+        }
+      }
+      closeAllReactionPickers();
       lightboxModal.classList.add('hidden');
       profileModal.classList.add('hidden');
     }

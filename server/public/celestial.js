@@ -54,20 +54,20 @@
   function getRandomStarColor() {
     if (currentTheme === 'neomorphism-light' || currentTheme === 'neomorphism' || currentTheme === 'light') {
       const darkColors = [
-        '#1e293b', // Deep charcoal
-        '#334155', // Slate graphite
-        '#475569', // Twilight slate
-        '#57534e', // Warm stone/bronze
-        '#4338ca'  // Dark indigo starlight
+        '#1e3a5f', // Deep Harbor Navy
+        '#2563eb', // Trust Sapphire
+        '#0d9488', // Balanced Sage Teal
+        '#475569', // Calm Slate
+        '#334155'  // Structured Charcoal Slate
       ];
       return darkColors[Math.floor(Math.random() * darkColors.length)];
     }
     const colors = [
-      '#ffffff', // Pure starlight
-      '#e0f2fe', // Ice blue
-      '#ede9fe', // Cosmic lavender
-      '#fef08a', // Soft gold
-      '#bae6fd'  // Starlight cyan
+      '#f1f5f9', // Soft Mist Starlight
+      '#bae6fd', // Serene Ice Blue
+      '#7dd3fc', // Aurora Cerulean
+      '#99f6e4', // Calm Seafoam
+      '#c7d2fe'  // Moonlit Indigo
     ];
     return colors[Math.floor(Math.random() * colors.length)];
   }

@@ -58,9 +58,40 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
+const ALLOWED_REACTIONS = ['heart', 'haha', 'wow', 'sad', 'angry'];
+const ALLOWED_STYLE_VARIANTS = ['default', 'calm', 'spotlight', 'greeting'];
+
+function createEmptyReactions() {
+  return {
+    heart: [],
+    haha: [],
+    wow: [],
+    sad: [],
+    angry: []
+  };
+}
+
+function normalizeReactions(raw) {
+  const base = createEmptyReactions();
+  if (!raw || typeof raw !== 'object') return base;
+  for (const key of ALLOWED_REACTIONS) {
+    if (Array.isArray(raw[key])) {
+      base[key] = raw[key].filter(id => typeof id === 'string' && id.length > 0);
+    }
+  }
+  return base;
+}
+
 module.exports = {
+  ALLOWED_REACTIONS,
+  ALLOWED_STYLE_VARIANTS,
+
   getRecentMessages(limit = 100) {
-    return messages.slice(-limit);
+    return messages.slice(-limit).map(m => ({
+      ...m,
+      styleVariant: ALLOWED_STYLE_VARIANTS.includes(m.styleVariant) ? m.styleVariant : 'default',
+      reactions: normalizeReactions(m.reactions)
+    }));
   },
 
   getMessageById(id) {
@@ -69,6 +100,10 @@ module.exports = {
   },
 
   addMessage(msg) {
+    const styleVariant = ALLOWED_STYLE_VARIANTS.includes(msg.styleVariant)
+      ? msg.styleVariant
+      : 'default';
+
     const record = {
       id: msg.id || 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
       userId: msg.userId,
@@ -76,6 +111,8 @@ module.exports = {
       color: msg.color || '#38bdf8',
       text: msg.text || '',
       imageUrl: msg.imageUrl || null,
+      styleVariant,
+      reactions: createEmptyReactions(),
       timestamp: msg.timestamp || new Date().toISOString(),
       replyTo: msg.replyTo ? {
         id: msg.replyTo.id,
@@ -91,5 +128,28 @@ module.exports = {
     }
     schedulePersist();
     return record;
+  },
+
+  toggleReaction(messageId, reactionType, userId) {
+    if (!messageId || !userId || !ALLOWED_REACTIONS.includes(reactionType)) {
+      return null;
+    }
+    const target = messages.find(m => m.id === messageId);
+    if (!target) return null;
+
+    target.reactions = normalizeReactions(target.reactions);
+    const list = target.reactions[reactionType];
+    const existingIdx = list.indexOf(userId);
+    if (existingIdx >= 0) {
+      list.splice(existingIdx, 1);
+    } else {
+      list.push(userId);
+    }
+
+    schedulePersist();
+    return {
+      messageId: target.id,
+      reactions: target.reactions
+    };
   }
 };

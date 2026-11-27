@@ -160,6 +160,9 @@ module.exports = function registerSocketHandlers(io) {
       }
 
       const cleanText = sanitizeText(rawText);
+      const styleVariant = db.ALLOWED_STYLE_VARIANTS.includes(payload.styleVariant)
+        ? payload.styleVariant
+        : 'default';
 
       // Resolve reply context if replyToId is provided
       let replyToData = null;
@@ -183,6 +186,7 @@ module.exports = function registerSocketHandlers(io) {
         color: session.color,
         text: cleanText,
         imageUrl: imageUrl && imageUrl.startsWith('/uploads/') ? imageUrl : null,
+        styleVariant,
         replyTo: replyToData
       });
 
@@ -192,6 +196,26 @@ module.exports = function registerSocketHandlers(io) {
 
       // 6. Broadcast to ALL connected clients in the world!
       io.emit('chat:broadcast', savedMessage);
+    });
+
+    // Handle animated message reaction toggle
+    let lastReactAt = 0;
+    socket.on('chat:react', (payload = {}) => {
+      const session = activeSockets.get(socket.id);
+      if (!session) return;
+
+      const now = Date.now();
+      if (now - lastReactAt < 120) return; // Lightweight flood throttle
+      lastReactAt = now;
+
+      const messageId = typeof payload.messageId === 'string' ? payload.messageId.trim() : '';
+      const reaction = typeof payload.reaction === 'string' ? payload.reaction.trim() : '';
+      if (!messageId || !db.ALLOWED_REACTIONS.includes(reaction)) return;
+
+      const updated = db.toggleReaction(messageId, reaction, session.userId);
+      if (updated) {
+        io.emit('chat:reaction_update', updated);
+      }
     });
 
     // Handle typing status
