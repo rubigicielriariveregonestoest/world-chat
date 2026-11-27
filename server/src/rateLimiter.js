@@ -3,20 +3,23 @@
  * Tracks per-clientToken and per-IP timestamps for text cooldowns, duplicate
  * message spam detection, chat photo uploads, and profile avatar updates.
  */
-const textTimestamps = new Map();
-const imageTimestamps = new Map();
-const avatarTimestamps = new Map();
-const lastUserMessages = new Map();
+// Simple token/IP based in-memory rate limiter
 
-const TEXT_COOLDOWN_MS = 1500;
-const IMAGE_COOLDOWN_MS = 15000;
-const AVATAR_COOLDOWN_MS = 3000;
+const textTimestamps = new Map(); // key -> last message timestamp
+const imageTimestamps = new Map(); // key -> last image timestamp
+const avatarTimestamps = new Map(); // key -> last avatar update timestamp
+const lastUserMessages = new Map(); // key -> last text content
+
+const TEXT_COOLDOWN_MS = 1500; // 1.5 seconds between text messages
+const IMAGE_COOLDOWN_MS = 15000; // 15 seconds between image uploads
+const AVATAR_COOLDOWN_MS = 3000; // 3 seconds between profile photo changes
 
 /*
  * Periodic Memory Eviction
  * Runs every 10 minutes to prune expired timestamp and message history entries
  * so long-running server processes maintain bounded memory usage.
  */
+// Clean up old entries periodically (every 10 minutes)
 setInterval(() => {
   const now = Date.now();
   for (const [key, ts] of textTimestamps.entries()) {

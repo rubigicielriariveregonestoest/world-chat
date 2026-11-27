@@ -23,10 +23,11 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
+// Multer memory storage (up to 5MB)
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
   fileFilter: (req, file, cb) => {
     const allowedMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (allowedMime.includes(file.mimetype)) {
@@ -42,6 +43,7 @@ const upload = multer({
  * Prevents unbounded disk growth by trimming older files above 500 entries,
  * and validates image magic bytes/metadata before persisting uploaded buffers.
  */
+// Clean up old photos if upload folder gets too large (> 500 files)
 function cleanupOldUploads() {
   try {
     const files = fs.readdirSync(UPLOAD_DIR).map(f => {
@@ -66,6 +68,7 @@ async function validateAndDetectImage(req) {
     return { error: 'No image file uploaded.' };
   }
 
+  // Validate real image content (magic bytes & metadata verification)
   if (sharp) {
     try {
       const metadata = await sharp(req.file.buffer).metadata();
@@ -80,6 +83,7 @@ async function validateAndDetectImage(req) {
 
   const isGif = req.file.mimetype === 'image/gif';
   if (isGif) {
+    // Validate GIF magic bytes (GIF87a or GIF89a)
     const header = req.file.buffer.toString('ascii', 0, 6);
     if (header !== 'GIF87a' && header !== 'GIF89a') {
       return { error: 'Invalid or forged GIF file.' };
@@ -100,6 +104,7 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
     const clientToken = (typeof rawClientId === 'string' && rawClientId.trim().length > 0) ? rawClientId.trim() : null;
     const clientIp = req.ip || req.connection?.remoteAddress || 'unknown_ip';
 
+    // 1. Check rate limits on BOTH token and real IP to prevent spoofing bypasses
     if (clientToken) {
       const tokenCheck = rateLimiter.checkImageLimit(clientToken);
       if (!tokenCheck.allowed) {
@@ -111,6 +116,7 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
       return res.status(429).json({ error: ipCheck.reason, waitSeconds: ipCheck.waitSeconds });
     }
 
+    // 2. Validate real image content (magic bytes & metadata verification)
     const validation = await validateAndDetectImage(req);
     if (validation.error) {
       return res.status(400).json({ error: validation.error });
@@ -121,15 +127,18 @@ router.post('/upload', upload.single('photo'), async (req, res) => {
     const outPath = path.join(UPLOAD_DIR, filename);
 
     if (sharp && !validation.isGif) {
+      // Strip EXIF, resize down if larger than 1920x1080, convert to high-efficiency webp
       await sharp(req.file.buffer)
-        .rotate()
+        .rotate() // auto-orient based on EXIF before stripping
         .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
         .webp({ quality: 82 })
         .toFile(outPath);
     } else {
+      // Safe write verified GIF or fallback buffer
       fs.writeFileSync(outPath, req.file.buffer);
     }
 
+    // Record photo cooldown for both token and IP
     if (clientToken) rateLimiter.recordImage(clientToken);
     rateLimiter.recordImage(clientIp);
     cleanupOldUploads();
@@ -156,6 +165,7 @@ router.post('/avatar', upload.single('avatar'), async (req, res) => {
     const clientToken = (typeof rawClientId === 'string' && rawClientId.trim().length > 0) ? rawClientId.trim() : null;
     const clientIp = req.ip || req.connection?.remoteAddress || 'unknown_ip';
 
+    // 1. Check avatar cooldown on both clientToken and real IP
     if (clientToken) {
       const tokenCheck = rateLimiter.checkAvatarLimit(clientToken);
       if (!tokenCheck.allowed) {
@@ -167,6 +177,7 @@ router.post('/avatar', upload.single('avatar'), async (req, res) => {
       return res.status(429).json({ error: ipCheck.reason, waitSeconds: ipCheck.waitSeconds });
     }
 
+    // 2. Validate real image content before processing
     const validation = await validateAndDetectImage(req);
     if (validation.error) {
       return res.status(400).json({ error: validation.error });
@@ -177,15 +188,18 @@ router.post('/avatar', upload.single('avatar'), async (req, res) => {
     const outPath = path.join(UPLOAD_DIR, filename);
 
     if (sharp && !validation.isGif) {
+      // Strip EXIF & center-crop to crisp 256x256 square WebP
       await sharp(req.file.buffer)
-        .rotate()
+        .rotate() // auto-orient based on EXIF before stripping
         .resize(256, 256, { fit: 'cover', position: 'center' })
         .webp({ quality: 86 })
         .toFile(outPath);
     } else {
+      // Safe write verified GIF or fallback buffer
       fs.writeFileSync(outPath, req.file.buffer);
     }
 
+    // Record avatar cooldown for both token and IP
     if (clientToken) rateLimiter.recordAvatar(clientToken);
     rateLimiter.recordAvatar(clientIp);
     cleanupOldUploads();

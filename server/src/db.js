@@ -10,12 +10,14 @@ const DATA_DIR = path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, 'messages.json');
 const MAX_MESSAGES = 500;
 
+// Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
 let messages = [];
 
+// Load existing messages on startup
 try {
   if (fs.existsSync(DB_FILE)) {
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
@@ -35,7 +37,7 @@ function schedulePersist() {
   persistTimeout = setTimeout(() => {
     persistTimeout = null;
     flushPersist();
-  }, 1000);
+  }, 1000); // Debounce disk writes to at most once per second under load
 }
 
 function flushPersist() {
@@ -53,6 +55,7 @@ function flushPersist() {
   });
 }
 
+// Emergency flush on server shutdown
 process.on('SIGINT', () => {
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(messages.slice(-MAX_MESSAGES), null, 2), 'utf-8');

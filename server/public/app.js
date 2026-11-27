@@ -4,7 +4,9 @@
  * tactile feedback (clicks, menu opens, color swatch chimes, swipe & toast tones)
  * without relying on external audio files.
  */
+// World Chat — Client Application
 (() => {
+  // --- Audio Synthesizer (Web Audio API) ---
   let audioCtx = null;
   function getAudioContext() {
     if (!audioCtx) {
@@ -553,6 +555,7 @@
    * widget color state, structural UI SVG icons, Noto Color Emoji reaction glyphs,
    * and the curated Noto Emoji tray for direct chat insertion.
    */
+  // --- Application State ---
   const state = {
     username: localStorage.getItem('wc_username') || '',
     color: localStorage.getItem('wc_color') || '',
@@ -617,6 +620,7 @@
    * Replaces custom SVG emoji illustrations with cross-platform Noto Color Emoji
    * characters styled via CSS keyframe animations for both reactions and chat drafts.
    */
+  // --- Animated Noto Color Emoji Reactions Registry ---
   const REACTION_TYPES = ['heart', 'haha', 'wow', 'sad', 'angry'];
   const REACTION_LABELS = {
     heart: 'Heart',
@@ -759,6 +763,7 @@
    * fallback), synchronizes toggle badges, computes accessible widget colors, and
    * freezes CSS transitions briefly during theme flips to prevent mobile lag.
    */
+  // --- UI Update Helpers ---
   function renderAvatarElement(el, avatarUrl, username, color) {
     if (!el) return;
     el.style.backgroundColor = color || 'var(--accent-cyan)';
@@ -944,10 +949,12 @@
    * Authenticates the active guest profile (display name, accent, saved avatar)
    * on connection and routes live history, chat broadcasts, reactions, and typing.
    */
+  // --- Socket.IO Connection ---
   const socket = io();
 
   socket.on('connect', () => {
     console.log('[Socket] Connected to World Chat server');
+    // Authenticate active guest identity and avatar on connection
     socket.emit('auth:guest_join', {
       username: state.username,
       color: state.color,
@@ -1130,7 +1137,7 @@
       .replace(/>/g, '&gt;');
     const safeAuthorColor = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#38bdf8';
 
-    // Render sender avatar + display name externally above the bubble row
+    // Render author name & optional saved avatar externally above the bubble row (omitted on consecutive messages from the same sender)
     let authorHtml = '';
     if (!isConsecutive) {
       const safeAvatarUrl = (typeof msg.avatarUrl === 'string' && /^\/uploads\/[a-zA-Z0-9_.-]+\.(webp|gif|png|jpg|jpeg)$/.test(msg.avatarUrl.trim()))
@@ -2118,6 +2125,7 @@
     });
   }
 
+  // Open customization modal from the dropdown's Edit or Color Widgets buttons
   if (editProfileBtn) {
     editProfileBtn.addEventListener('click', () => openCustomizationModal('identity'));
   }
@@ -2264,6 +2272,7 @@
     applyWidgetColors(state.widgetColors);
     profileModal.classList.add('hidden');
 
+    // Notify server of updated name, color, and saved avatar photo
     socket.emit('auth:guest_join', {
       username: state.username,
       color: state.color,

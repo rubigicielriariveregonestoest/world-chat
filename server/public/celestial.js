@@ -4,6 +4,8 @@
  * showers. Caps devicePixelRatio at 2x and trims mobile star density to keep
  * rendering fluid across both desktop and lower-power mobile GPUs.
  */
+// World Chat — Celestial Universe Engine
+// Handles: Twinkling Starfield, 80% Diagonal Shooting Stars, 20% Meteor Showers
 (() => {
   const canvas = document.getElementById('celestial-canvas');
   if (!canvas) return;
@@ -13,6 +15,7 @@
   let height = 0;
   let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
+  // --- Resize Handler with HiDPI support ---
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     width = window.innerWidth;
@@ -34,6 +37,7 @@
    * Adapts particle hues instantaneously between Midnight Harbor (dark) and
    * Serene Alabaster (light) themes while keeping star density responsive.
    */
+  // --- Current Theme Tracking & Dynamic Adaptation ---
   let currentTheme = document.documentElement.getAttribute('data-theme') || 'neomorphism-dark';
 
   window.setCelestialTheme = function(theme) {
@@ -43,6 +47,7 @@
     }
   };
 
+  // --- Background Starfield ---
   const stars = [];
 
   function initStars() {
@@ -362,11 +367,13 @@
    * advances meteors, halts rendering cleanly at 0 FPS when idle or hidden, and
    * restores active motion immediately on user interaction.
    */
+  // --- Main Animation Loop (60 FPS when active, 0 FPS when idle) ---
   function render() {
     if (!isRunning) return;
 
     ctx.clearRect(0, 0, width, height);
 
+    // 1. Draw twinkling background stars across full canvas
     for (let i = 0; i < stars.length; i++) {
       const star = stars[i];
       star.twinklePhase += star.twinkleSpeed;

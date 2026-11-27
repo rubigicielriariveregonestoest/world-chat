@@ -4,6 +4,7 @@
  * psychology (trust, calm, security, structure), distinct incoming/outgoing
  * message bubble variables, widget tint hooks, and the Inter + Noto Color Emoji font stack.
  */
+/* World Chat — Trust & Calm Neomorphism Design System */
 :root,
 [data-theme="neomorphism-dark"] {
   --bg-primary: #1a2230;               /* Midnight Harbor Slate Base Canvas (Trust, Calm, Security) */
@@ -124,6 +125,7 @@ body {
  * never clip on mobile notches, aligning the brand, presence, and profile pills
  * using lightweight transform-only hover transitions.
  */
+/* Header as Floating Glass Mini-Bubbles */
 .app-header {
   min-height: var(--header-height);
   height: auto;
@@ -736,6 +738,7 @@ body {
  * Styles inset icon sockets and convex rule chips using GPU-lightweight
  * transform transitions so theme changes repaint without shadow lag.
  */
+/* --- Neomorphic Tactile Icons & Micro-Pods --- */
 .neo-icon {
   display: inline-flex;
   align-items: center;
@@ -813,10 +816,11 @@ body {
  * mobile repaints, consecutive-message grouping, sender avatars, inline formatting,
  * and trust/calm incoming vs outgoing neomorphic bubble styling.
  */
+/* Messages List & Floating Cloud Glass Bubbles */
 .messages-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 8px; /* Compact conversation spacing (reduced from 14px) */
 }
 
 .message-item {
@@ -825,7 +829,7 @@ body {
   align-items: flex-start;
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   max-width: 85%;
-  margin-bottom: 0px;
+  margin-bottom: 0px; /* Spacing cleanly handled by messages-list gap */
   position: relative;
   content-visibility: auto;
   contain-intrinsic-size: 0 68px;
@@ -1430,6 +1434,7 @@ body {
  * Houses the bottom photo attachment button, inset text input cavity,
  * swipe-to-send drag thumb, and beautifier popover trigger.
  */
+/* Detached Floating Input System */
 .app-footer {
   padding: 14px 20px;
   background: transparent;
@@ -1445,6 +1450,7 @@ body {
   position: relative;
 }
 
+/* Floating Circular Buttons */
 .floating-circle-btn {
   width: 44px;
   height: 44px;
@@ -3291,6 +3297,7 @@ body {
   font-size: 1.22rem;
 }
 
+/* Bespoke Keyframe Animations for Each Reaction */
 .noto-emoji.react-heart {
   animation: reactHeartBeat 1.8s ease-in-out infinite;
   transform-origin: center;

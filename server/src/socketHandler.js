@@ -6,6 +6,7 @@
 const db = require('./db');
 const rateLimiter = require('./rateLimiter');
 
+// Simple HTML escaping to prevent XSS
 function sanitizeText(str) {
   if (!str || typeof str !== 'string') return '';
   return str
@@ -17,14 +18,15 @@ function sanitizeText(str) {
     .replace(/'/g, '&#039;');
 }
 
+// Strict upload path check to prevent arbitrary URL injection
 function sanitizeUploadUrl(url) {
   if (typeof url !== 'string') return null;
   const trimmed = url.trim();
   return /^\/uploads\/[a-zA-Z0-9_.-]+\.(webp|gif|png|jpg|jpeg)$/.test(trimmed) ? trimmed : null;
 }
 
-const activeSockets = new Map();
-const typingUsers = new Map();
+const activeSockets = new Map(); // socket.id -> { userId, username, color, avatarUrl, clientToken, ip }
+const typingUsers = new Map(); // clientToken -> { username, expiresAt }
 
 /*
  * Room Presence & Typing Indicator Broadcasters
@@ -33,6 +35,7 @@ const typingUsers = new Map();
  */
 module.exports = function registerSocketHandlers(io) {
   function broadcastPresence() {
+    // Unique user tokens to avoid counting multiple tabs as separate people
     const uniqueTokens = new Set();
     const roster = [];
 
@@ -50,7 +53,7 @@ module.exports = function registerSocketHandlers(io) {
 
     io.emit('presence:update', {
       onlineCount: Math.max(1, uniqueTokens.size || activeSockets.size),
-      users: roster.slice(0, 30)
+      users: roster.slice(0, 30) // sample of active users
     });
   }
 
@@ -67,6 +70,7 @@ module.exports = function registerSocketHandlers(io) {
     io.emit('typing:update', { typingUsers: names.slice(0, 5) });
   }
 
+  // Periodic cleanup for expired typing indicators
   setInterval(broadcastTyping, 3000);
 
   /*
@@ -75,11 +79,13 @@ module.exports = function registerSocketHandlers(io) {
    * messages with rate-limit/mood checks, toggles reactions, and cleans up disconnects.
    */
   io.on('connection', (socket) => {
+    // Parse client IP safely handling reverse proxy headers (e.g. Render, Railway, Cloudflare)
     const rawXForwardedFor = socket.handshake.headers['x-forwarded-for'];
     const clientIP = rawXForwardedFor
       ? String(rawXForwardedFor).split(',')[0].trim()
       : (socket.handshake.address || 'unknown_ip');
 
+    // Handle guest join
     socket.on('auth:guest_join', (data = {}) => {
       let rawUsername = (data.username || '').toString().trim();
       let username = sanitizeText(rawUsername);
@@ -90,6 +96,8 @@ module.exports = function registerSocketHandlers(io) {
       }
 
       const clientToken = data.clientToken || 'guest_' + Math.random().toString(36).substring(2, 9);
+
+      // Strict hex color validation to eliminate CSS/attribute injection
       const colorRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
       const color = (data.color && colorRegex.test(String(data.color).trim()))
         ? String(data.color).trim()
@@ -109,11 +117,15 @@ module.exports = function registerSocketHandlers(io) {
 
       activeSockets.set(socket.id, session);
 
+      // Send recent history to newly connected client
       const history = db.getRecentMessages(60);
       socket.emit('world:history', history);
+
+      // Send presence update to all
       broadcastPresence();
     });
 
+    // Handle chat message
     socket.on('chat:send', (payload = {}) => {
       const session = activeSockets.get(socket.id);
       if (!session) {
@@ -123,16 +135,19 @@ module.exports = function registerSocketHandlers(io) {
       const rawText = (payload.text || '').toString();
       const imageUrl = sanitizeUploadUrl(payload.imageUrl);
 
+      // 1. Validation: either text or image must be provided
       if (!rawText.trim() && !imageUrl) {
         return socket.emit('chat:error', { message: 'Message cannot be empty.' });
       }
 
+      // 2. Character limit enforcement (350 characters max)
       if (rawText.length > 350) {
         return socket.emit('chat:error', {
           message: `Character limit exceeded! Max 350 characters (yours was ${rawText.length}).`
         });
       }
 
+      // 3. Text Rate Limit (Slowmode) - Enforce on both clientToken and real IP
       if (rawText.trim()) {
         const tokenCheck = rateLimiter.checkTextLimit(session.clientToken);
         if (!tokenCheck.allowed) {
@@ -152,6 +167,7 @@ module.exports = function registerSocketHandlers(io) {
           });
         }
 
+        // 4. Duplicate Check
         const dupToken = rateLimiter.checkDuplicate(session.clientToken, rawText);
         if (dupToken.duplicate) {
           return socket.emit('chat:error', { message: dupToken.reason, type: 'duplicate' });
@@ -161,6 +177,7 @@ module.exports = function registerSocketHandlers(io) {
           return socket.emit('chat:error', { message: dupIp.reason, type: 'duplicate' });
         }
 
+        // Record text in rate limiter for both token and IP
         rateLimiter.recordText(session.clientToken, rawText);
         rateLimiter.recordText(session.ip, rawText);
       }
@@ -170,6 +187,7 @@ module.exports = function registerSocketHandlers(io) {
         ? payload.styleVariant
         : 'default';
 
+      // Resolve reply context if replyToId is provided
       let replyToData = null;
       if (payload.replyToId && typeof payload.replyToId === 'string') {
         const targetMsg = db.getMessageById(payload.replyToId);
@@ -184,6 +202,7 @@ module.exports = function registerSocketHandlers(io) {
         }
       }
 
+      // 5. Save to database
       const savedMessage = db.addMessage({
         userId: session.userId,
         username: session.username,
@@ -195,18 +214,22 @@ module.exports = function registerSocketHandlers(io) {
         replyTo: replyToData
       });
 
+      // Clear typing indicator for this user immediately
       typingUsers.delete(session.clientToken);
       broadcastTyping();
+
+      // 6. Broadcast to ALL connected clients in the world!
       io.emit('chat:broadcast', savedMessage);
     });
 
+    // Handle animated message reaction toggle
     let lastReactAt = 0;
     socket.on('chat:react', (payload = {}) => {
       const session = activeSockets.get(socket.id);
       if (!session) return;
 
       const now = Date.now();
-      if (now - lastReactAt < 120) return;
+      if (now - lastReactAt < 120) return; // Lightweight flood throttle
       lastReactAt = now;
 
       const messageId = typeof payload.messageId === 'string' ? payload.messageId.trim() : '';
@@ -219,6 +242,7 @@ module.exports = function registerSocketHandlers(io) {
       }
     });
 
+    // Handle typing status
     socket.on('typing:update', ({ isTyping } = {}) => {
       const session = activeSockets.get(socket.id);
       if (!session) return;
@@ -234,6 +258,7 @@ module.exports = function registerSocketHandlers(io) {
       broadcastTyping();
     });
 
+    // Handle disconnect
     socket.on('disconnect', () => {
       const session = activeSockets.get(socket.id);
       if (session) {
