@@ -65,11 +65,28 @@ process.on('SIGINT', () => {
 
 /*
  * Schema Normalization & Allowlists
- * Restricts chat reactions and beautified message moods to validated enums
- * so legacy message records and incoming payloads always normalize safely.
+ * Restricts chat reactions, beautified message moods, and distinguished user
+ * icons to validated enums so legacy records and payloads normalize safely.
  */
 const ALLOWED_REACTIONS = ['heart', 'haha', 'wow', 'sad', 'angry'];
 const ALLOWED_STYLE_VARIANTS = ['default', 'calm', 'spotlight', 'greeting'];
+const ALLOWED_USER_ICONS = ['🌟', '🚀', '🌙', '☀️', '🪐', '🔥', '⚡', '🧭', '🦋', '🦊', '🐬', '💎'];
+
+function pickDefaultUserIcon(seed) {
+  const str = String(seed || 'guest');
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return ALLOWED_USER_ICONS[Math.abs(hash) % ALLOWED_USER_ICONS.length];
+}
+
+function normalizeUserIcon(rawIcon, seed) {
+  if (typeof rawIcon === 'string' && ALLOWED_USER_ICONS.includes(rawIcon.trim())) {
+    return rawIcon.trim();
+  }
+  return pickDefaultUserIcon(seed);
+}
 
 function createEmptyReactions() {
   return {
@@ -100,11 +117,14 @@ function normalizeReactions(raw) {
 module.exports = {
   ALLOWED_REACTIONS,
   ALLOWED_STYLE_VARIANTS,
+  ALLOWED_USER_ICONS,
+  pickDefaultUserIcon,
 
   getRecentMessages(limit = 100) {
     return messages.slice(-limit).map(m => ({
       ...m,
       avatarUrl: m.avatarUrl || null,
+      userIcon: normalizeUserIcon(m.userIcon, m.userId || m.username),
       styleVariant: ALLOWED_STYLE_VARIANTS.includes(m.styleVariant) ? m.styleVariant : 'default',
       reactions: normalizeReactions(m.reactions)
     }));
@@ -126,6 +146,7 @@ module.exports = {
       username: msg.username,
       color: msg.color || '#38bdf8',
       avatarUrl: msg.avatarUrl || null,
+      userIcon: normalizeUserIcon(msg.userIcon, msg.userId || msg.username),
       text: msg.text || '',
       imageUrl: msg.imageUrl || null,
       styleVariant,

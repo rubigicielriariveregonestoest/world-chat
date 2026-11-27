@@ -9,6 +9,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="worldchat-version" content="1.1.0">
   <title>World Chat — Global Live Chat</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
@@ -137,6 +138,17 @@
                 </span>
                 <span class="dropdown-item-label">Color Widgets</span>
                 <span class="dropdown-item-badge theme">Custom</span>
+              </button>
+
+              <!-- What's New & App Update Check -->
+              <button type="button" id="check-update-btn" class="dropdown-item-btn" title="Check for World Chat updates">
+                <span class="dropdown-item-icon neo-icon-pod">
+                  <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                  </svg>
+                </span>
+                <span class="dropdown-item-label">App Updates</span>
+                <span class="dropdown-item-badge on" id="dropdown-version-badge">v1.1.0</span>
               </button>
             </div>
           </div>
@@ -401,6 +413,45 @@
   </div>
 
   <!--
+    Application Update Notice Popup Modal
+    Appears as a clear visual sign when a new World Chat version rolls out or
+    is ready to apply, showing highlights and letting users click Update Now.
+  -->
+  <div id="update-notice-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="update-notice-title">
+    <div class="modal-card update-modal-box">
+      <div class="modal-header">
+        <h3 id="update-notice-title">
+          <span class="neo-icon-pod update-icon-pod">
+            <svg class="neo-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+          </span>
+          <span>Update Available</span>
+          <span id="update-version-badge" class="update-version-pill">v1.1.0</span>
+        </h3>
+        <button type="button" id="close-update-notice" class="close-btn" title="Close">
+          <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="update-notice-subtitle" class="update-notice-subtitle">
+          A new World Chat update is ready! Click Update below to apply the latest chat improvements.
+        </p>
+        <div class="update-highlights-card">
+          <div class="update-highlights-heading">What's New</div>
+          <ul id="update-highlights-list" class="update-highlights-list"></ul>
+        </div>
+      </div>
+      <div class="modal-footer update-actions-row">
+        <button type="button" id="later-update-btn" class="btn-secondary-neo">Later</button>
+        <button type="button" id="confirm-update-btn" class="primary-btn update-confirm-btn">Update Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!--
     Profile Identity, Saved Photo Upload & Color Widgets Modal
     Houses two tabs: Identity (display name, device photo upload, avatar accent color,
     and live chat preview) and Color Widgets (theme accent, bubble tints, and reset).
@@ -443,16 +494,19 @@
           <label style="margin-top: 16px;">Avatar & Name Accent Color</label>
           <div id="color-palette" class="color-palette"></div>
 
+          <label style="margin-top: 16px;">Distinguished User Icon</label>
+          <div id="icon-palette" class="icon-palette"></div>
+
           <div class="preview-section">
             <label>Chat Preview</label>
             <div class="preview-message-box">
-              <div id="modal-preview-avatar" class="user-avatar">?</div>
+              <div id="modal-preview-avatar" class="msg-bubble-avatar preview-bubble-avatar">?</div>
               <div>
                 <div class="preview-header">
                   <span id="modal-preview-name" class="user-name">Guest</span>
                   <span class="msg-time">Just now</span>
                 </div>
-                <div class="preview-text">Hello World! This is how your chat appears.</div>
+                <div class="preview-text">Hello World! This is how your bubble icon appears.</div>
               </div>
             </div>
           </div>

@@ -538,31 +538,63 @@
   const ADJECTIVES = ['Cosmic', 'Starlight', 'Astro', 'Nova', 'Nebula', 'Eclipse', 'Quantum', 'Solar', 'Zenith', 'Celestial', 'Lunar', 'Astral'];
   const NOUNS = ['Pulsar', 'Voyager', 'Comet', 'Falcon', 'Orion', 'Nomad', 'Spark', 'Phoenix', 'Star', 'Specter', 'Drifter', 'Echo'];
 
+  const DISTINGUISHED_USER_ICONS = ['🌟', '🚀', '🌙', '☀️', '🪐', '🔥', '⚡', '🧭', '🦋', '🦊', '🐬', '💎'];
+  const CLIENT_APP_VERSION = '1.1.0';
+  const DEFAULT_RELEASE_INFO = {
+    version: CLIENT_APP_VERSION,
+    buildId: '',
+    title: 'World Chat Update Available',
+    highlights: [
+      'Profile photos & distinguished user icons now appear on the left side of every chat bubble',
+      'Choose your own distinguished icon inside Customize Profile & Widgets',
+      'Restored 3D convex neomorphic chat bubbles with matched surrounding color shadows'
+    ]
+  };
+
+  function pickDefaultUserIcon(seed) {
+    const str = String(seed || 'guest');
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+    }
+    return DISTINGUISHED_USER_ICONS[Math.abs(hash) % DISTINGUISHED_USER_ICONS.length];
+  }
+
+  function resolveUserIcon(rawIcon, seed) {
+    if (typeof rawIcon === 'string' && DISTINGUISHED_USER_ICONS.includes(rawIcon.trim())) {
+      return rawIcon.trim();
+    }
+    return pickDefaultUserIcon(seed);
+  }
+
   function generateRandomIdentity() {
     const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
     const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
     const num = Math.floor(1000 + Math.random() * 9000);
     const color = COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
     const token = 'guest_' + Math.random().toString(36).substring(2, 10);
+    const userId = 'usr_' + token.substring(0, 8);
     return {
       username: `${adj}${noun}#${num}`,
       color,
+      userIcon: pickDefaultUserIcon(userId),
       clientToken: token,
-      userId: 'usr_' + token.substring(0, 8)
+      userId
     };
   }
 
   /*
    * Identity State, Noto Emoji Registries & Neomorphic Icon Assets
-   * Manages persisted guest profile credentials (including saved avatar photo URL),
-   * widget color state, structural UI SVG icons, Noto Color Emoji reaction glyphs,
-   * and the curated Noto Emoji tray for direct chat insertion.
+   * Manages persisted guest profile credentials (saved avatar photo URL and
+   * distinguished icon), widget color state, structural UI SVG icons, Noto
+   * Color Emoji reactions, and the curated Noto Emoji tray for chat drafting.
    */
   // --- Application State ---
   const state = {
     username: localStorage.getItem('wc_username') || '',
     color: localStorage.getItem('wc_color') || '',
     avatarUrl: localStorage.getItem('wc_avatar_url') || '',
+    userIcon: localStorage.getItem('wc_user_icon') || '',
     clientToken: localStorage.getItem('wc_token') || '',
     userId: localStorage.getItem('wc_userId') || '',
     soundEnabled: localStorage.getItem('wc_sound') !== 'false',
@@ -591,12 +623,17 @@
     const generated = generateRandomIdentity();
     state.username = generated.username;
     state.color = generated.color;
+    state.userIcon = generated.userIcon;
     state.clientToken = generated.clientToken;
     state.userId = generated.userId;
     localStorage.setItem('wc_username', state.username);
     localStorage.setItem('wc_color', state.color);
+    localStorage.setItem('wc_user_icon', state.userIcon);
     localStorage.setItem('wc_token', state.clientToken);
     localStorage.setItem('wc_userId', state.userId);
+  } else if (!DISTINGUISHED_USER_ICONS.includes(state.userIcon)) {
+    state.userIcon = pickDefaultUserIcon(state.userId || state.username);
+    localStorage.setItem('wc_user_icon', state.userIcon);
   }
 
   // --- Neomorphic Volumetric Icons Registry ---
@@ -718,9 +755,20 @@
   const removeProfilePhotoBtn = document.getElementById('remove-profile-photo-btn');
   const customNameInput = document.getElementById('custom-name-input');
   const colorPaletteEl = document.getElementById('color-palette');
+  const iconPaletteEl = document.getElementById('icon-palette');
   const saveProfileBtn = document.getElementById('save-profile-btn');
   const modalPreviewAvatar = document.getElementById('modal-preview-avatar');
   const modalPreviewName = document.getElementById('modal-preview-name');
+
+  const checkUpdateBtn = document.getElementById('check-update-btn');
+  const dropdownVersionBadge = document.getElementById('dropdown-version-badge');
+  const updateNoticeModal = document.getElementById('update-notice-modal');
+  const closeUpdateNoticeBtn = document.getElementById('close-update-notice');
+  const laterUpdateBtn = document.getElementById('later-update-btn');
+  const confirmUpdateBtn = document.getElementById('confirm-update-btn');
+  const updateVersionBadge = document.getElementById('update-version-badge');
+  const updateNoticeSubtitle = document.getElementById('update-notice-subtitle');
+  const updateHighlightsList = document.getElementById('update-highlights-list');
 
   const widgetAccentPicker = document.getElementById('widget-accent-picker');
   const widgetIncomingPicker = document.getElementById('widget-incoming-picker');
@@ -744,6 +792,7 @@
   const toastContainer = document.getElementById('toast-container');
 
   let modalSelectedColor = state.color;
+  let modalSelectedIcon = state.userIcon;
   let modalWidgetColors = { ...state.widgetColors };
 
   // --- Toast Notifications ---
@@ -763,13 +812,13 @@
   }
 
   /*
-   * Header Avatar Renderer, Toggle Badges & Mobile-Fast Theme Engine
-   * Renders uploaded circular profile photos (with colored initial monogram
-   * fallback), synchronizes toggle badges, computes accessible widget colors, and
+   * Header Avatar Renderer, Bubble Avatar + Distinguished Icon Builder & Theme Engine
+   * Renders circular profile photos with distinguished user icons (for header,
+   * modal preview, and left-side chat bubbles), synchronizes toggle badges, and
    * freezes CSS transitions briefly during theme flips to prevent mobile lag.
    */
   // --- UI Update Helpers ---
-  function renderAvatarElement(el, avatarUrl, username, color) {
+  function renderAvatarElement(el, avatarUrl, username, color, userIcon = state.userIcon) {
     if (!el) return;
     el.style.backgroundColor = color || 'var(--accent-cyan)';
     if (avatarUrl) {
@@ -779,16 +828,67 @@
       img.alt = username || 'Avatar';
       el.appendChild(img);
     } else {
-      el.innerHTML = '';
-      el.innerText = (username || '?').charAt(0).toUpperCase();
+      const icon = resolveUserIcon(userIcon, username);
+      el.innerHTML = `<span class="noto-emoji avatar-glyph" aria-hidden="true">${icon}</span>`;
     }
   }
 
+  function applyBubbleAvatarVisual(el, avatarUrl, username, color, userIcon) {
+    if (!el) return;
+    const safeColor = isValidHexColor(color) ? color : '#38bdf8';
+    const icon = resolveUserIcon(userIcon, username);
+    el.innerHTML = '';
+    if (avatarUrl) {
+      el.style.background = 'var(--bg-card)';
+      const img = document.createElement('img');
+      img.src = avatarUrl;
+      img.className = 'msg-bubble-avatar-img';
+      img.alt = username || 'Avatar';
+      el.appendChild(img);
+
+      const badge = document.createElement('span');
+      badge.className = 'msg-distinguished-badge';
+      badge.title = `Distinguished icon (${icon})`;
+      badge.textContent = icon;
+      el.appendChild(badge);
+    } else {
+      const topStop = adjustHexColor(safeColor, 18);
+      const bottomStop = adjustHexColor(safeColor, -22);
+      el.style.background = `linear-gradient(145deg, ${topStop}, ${bottomStop})`;
+      const glyph = document.createElement('span');
+      glyph.className = 'msg-bubble-avatar-glyph';
+      glyph.setAttribute('aria-hidden', 'true');
+      glyph.textContent = icon;
+      el.appendChild(glyph);
+    }
+  }
+
+  function buildBubbleAvatarHtml(avatarUrl, username, color, userIcon) {
+    const safeName = (username || 'Guest').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const safeColor = isValidHexColor(color) ? color : '#38bdf8';
+    const icon = resolveUserIcon(userIcon, username);
+    if (avatarUrl) {
+      return `
+        <div class="msg-bubble-avatar" title="${safeName} ${icon}" style="background: var(--bg-card);">
+          <img src="${avatarUrl}" class="msg-bubble-avatar-img" alt="${safeName}" loading="lazy">
+          <span class="msg-distinguished-badge" title="Distinguished icon">${icon}</span>
+        </div>
+      `;
+    }
+    const topStop = adjustHexColor(safeColor, 18);
+    const bottomStop = adjustHexColor(safeColor, -22);
+    return `
+      <div class="msg-bubble-avatar" title="${safeName} ${icon}" style="background: linear-gradient(145deg, ${topStop}, ${bottomStop});">
+        <span class="msg-bubble-avatar-glyph" aria-hidden="true">${icon}</span>
+      </div>
+    `;
+  }
+
   function updateHeaderProfile() {
-    renderAvatarElement(userAvatarEl, state.avatarUrl, state.username, state.color);
+    renderAvatarElement(userAvatarEl, state.avatarUrl, state.username, state.color, state.userIcon);
     userDisplayNameEl.innerText = state.username;
 
-    renderAvatarElement(dropdownUserAvatar, state.avatarUrl, state.username, state.color);
+    renderAvatarElement(dropdownUserAvatar, state.avatarUrl, state.username, state.color, state.userIcon);
     if (dropdownUserName) {
       dropdownUserName.innerText = state.username;
     }
@@ -1016,20 +1116,161 @@
    * Authenticates the active guest profile (display name, accent, saved avatar)
    * on connection and routes live history, chat broadcasts, reactions, and typing.
    */
+  /*
+   * Update Notice Popup & Live Version Monitor
+   * Tracks server release metadata pushed via Socket.IO and /api/version,
+   * displays the Update Notice Popup on new releases or live server deploys,
+   * and executes a clean update/reload action when the user clicks Update Now.
+   */
+  let activeReleaseInfo = { ...DEFAULT_RELEASE_INFO };
+  let initialServerBuildId = '';
+  let liveUpdateAvailable = false;
+
+  function openUpdateNoticeModal(release = activeReleaseInfo, isLiveUpdate = liveUpdateAvailable) {
+    if (!updateNoticeModal) return;
+    const info = release && release.version ? release : DEFAULT_RELEASE_INFO;
+
+    if (updateVersionBadge) {
+      updateVersionBadge.innerText = `v${info.version}`;
+    }
+    if (updateNoticeSubtitle) {
+      updateNoticeSubtitle.innerText = isLiveUpdate
+        ? `World Chat v${info.version} is live on the server. Click Update Now to load the latest version.`
+        : `Welcome to World Chat v${info.version}! Review what changed and click Update Now to confirm.`;
+    }
+    if (updateHighlightsList) {
+      updateHighlightsList.innerHTML = '';
+      const items = Array.isArray(info.highlights) && info.highlights.length > 0
+        ? info.highlights
+        : DEFAULT_RELEASE_INFO.highlights;
+      items.forEach((line) => {
+        const li = document.createElement('li');
+        li.textContent = String(line);
+        updateHighlightsList.appendChild(li);
+      });
+    }
+    if (confirmUpdateBtn) {
+      confirmUpdateBtn.disabled = false;
+      confirmUpdateBtn.innerText = isLiveUpdate ? 'Update Now' : 'Apply Update';
+    }
+
+    SoundFX.modalOpen();
+    updateNoticeModal.classList.remove('hidden');
+  }
+
+  function closeUpdateNoticeModal() {
+    if (!updateNoticeModal || updateNoticeModal.classList.contains('hidden')) return;
+    SoundFX.modalClose();
+    updateNoticeModal.classList.add('hidden');
+  }
+
+  function handleServerReleaseInfo(release, forceOpen = false) {
+    if (!release || typeof release !== 'object' || !release.version) return;
+    activeReleaseInfo = release;
+
+    if (!initialServerBuildId && release.buildId) {
+      initialServerBuildId = release.buildId;
+    }
+
+    const versionChanged = release.version !== CLIENT_APP_VERSION;
+    const buildChanged = Boolean(initialServerBuildId && release.buildId && release.buildId !== initialServerBuildId);
+    liveUpdateAvailable = versionChanged || buildChanged;
+
+    if (dropdownVersionBadge) {
+      dropdownVersionBadge.innerText = liveUpdateAvailable ? 'New!' : `v${release.version}`;
+      dropdownVersionBadge.className = liveUpdateAvailable ? 'dropdown-item-badge off' : 'dropdown-item-badge on';
+    }
+
+    const ackVersion = localStorage.getItem('wc_ack_version') || '';
+    const isUnseenRelease = ackVersion !== String(release.version);
+
+    if (forceOpen || liveUpdateAvailable || isUnseenRelease) {
+      if (updateNoticeModal && updateNoticeModal.classList.contains('hidden')) {
+        openUpdateNoticeModal(release, liveUpdateAvailable);
+      }
+    }
+  }
+
+  async function fetchServerVersion(forceOpen = false) {
+    try {
+      const res = await fetch('/api/version', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      handleServerReleaseInfo(data, forceOpen);
+    } catch (_) {}
+  }
+
+  if (checkUpdateBtn) {
+    checkUpdateBtn.addEventListener('click', () => {
+      SoundFX.click();
+      if (profileDropdownMenu) profileDropdownMenu.classList.add('hidden');
+      if (profileBtn) {
+        profileBtn.classList.remove('active');
+        profileBtn.setAttribute('aria-expanded', 'false');
+      }
+      openUpdateNoticeModal(activeReleaseInfo, liveUpdateAvailable);
+      fetchServerVersion(false);
+    });
+  }
+
+  if (closeUpdateNoticeBtn) closeUpdateNoticeBtn.addEventListener('click', closeUpdateNoticeModal);
+  if (laterUpdateBtn) laterUpdateBtn.addEventListener('click', closeUpdateNoticeModal);
+  if (updateNoticeModal) {
+    updateNoticeModal.addEventListener('click', (e) => {
+      if (e.target === updateNoticeModal) {
+        closeUpdateNoticeModal();
+      }
+    });
+  }
+
+  if (confirmUpdateBtn) {
+    confirmUpdateBtn.addEventListener('click', () => {
+      SoundFX.click();
+      const targetVersion = String((activeReleaseInfo && activeReleaseInfo.version) || CLIENT_APP_VERSION);
+      confirmUpdateBtn.disabled = true;
+      confirmUpdateBtn.innerText = 'Updating...';
+      localStorage.setItem('wc_ack_version', targetVersion);
+
+      if (liveUpdateAvailable) {
+        setTimeout(() => {
+          window.location.reload();
+        }, 250);
+      } else {
+        setTimeout(() => {
+          if (updateNoticeModal) updateNoticeModal.classList.add('hidden');
+          confirmUpdateBtn.disabled = false;
+          confirmUpdateBtn.innerText = 'Apply Update';
+          showToast(`World Chat updated to v${targetVersion}!`, 'info');
+        }, 320);
+      }
+    });
+  }
+
   // --- Socket.IO Connection ---
   const socket = io();
 
   socket.on('connect', () => {
     console.log('[Socket] Connected to World Chat server');
-    // Authenticate active guest identity and avatar on connection
+    // Authenticate active guest identity, saved avatar, and distinguished icon on connection
     socket.emit('auth:guest_join', {
       username: state.username,
       color: state.color,
       avatarUrl: state.avatarUrl || null,
+      userIcon: state.userIcon,
       clientToken: state.clientToken,
       userId: state.userId
     });
   });
+
+  socket.on('world:version', (release) => {
+    handleServerReleaseInfo(release, false);
+  });
+
+  // Fallback HTTP release check on startup and every 60 seconds
+  fetchServerVersion(false);
+  setInterval(() => {
+    fetchServerVersion(false);
+  }, 60000);
 
   socket.on('presence:update', (data) => {
     const count = data.onlineCount || 1;
@@ -1204,22 +1445,17 @@
       .replace(/>/g, '&gt;');
     const safeAuthorColor = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#38bdf8';
 
-    // Render author name & optional saved avatar externally above the bubble row (omitted on consecutive messages from the same sender)
-    let authorHtml = '';
-    if (!isConsecutive) {
-      const safeAvatarUrl = (typeof msg.avatarUrl === 'string' && /^\/uploads\/[a-zA-Z0-9_.-]+\.(webp|gif|png|jpg|jpeg)$/.test(msg.avatarUrl.trim()))
-        ? msg.avatarUrl.trim()
-        : '';
-      const avatarTag = safeAvatarUrl
-        ? `<img src="${safeAvatarUrl}" class="msg-author-avatar" alt="${safeAuthorName}" loading="lazy">`
-        : '';
-      authorHtml = `
-        <div class="msg-author-row">
-          ${avatarTag}
-          <div class="msg-author-external" style="color: ${safeAuthorColor}">${safeAuthorName}</div>
-        </div>
-      `;
-    }
+    // Render author name above the bubble column and pair profile photo + distinguished icon on the left side of the bubble
+    const safeAvatarUrl = (typeof msg.avatarUrl === 'string' && /^\/uploads\/[a-zA-Z0-9_.-]+\.(webp|gif|png|jpg|jpeg)$/.test(msg.avatarUrl.trim()))
+      ? msg.avatarUrl.trim()
+      : '';
+    const safeUserIcon = resolveUserIcon(msg.userIcon, senderId);
+    const authorHtml = !isConsecutive
+      ? `<div class="msg-author-external" style="color: ${safeAuthorColor}">${safeAuthorName}</div>`
+      : '';
+    const avatarSlotHtml = !isConsecutive
+      ? `<div class="msg-bubble-avatar-slot">${buildBubbleAvatarHtml(safeAvatarUrl, msg.username, safeAuthorColor, safeUserIcon)}</div>`
+      : `<div class="msg-bubble-avatar-spacer" aria-hidden="true"></div>`;
 
     // Render reply quote block if this message is replying to another message
     let replyQuoteHtml = '';
@@ -1268,10 +1504,11 @@
       `;
     }
 
-    // Floating cloud bubble with reactions row, external timestamp, react & reply buttons
+    // Floating cloud bubble with left avatar/distinguished icon, reactions row, external timestamp, react & reply buttons
     item.innerHTML = `
       ${authorHtml}
       <div class="msg-bubble-row">
+        ${avatarSlotHtml}
         <div class="msg-bubble-col">
           <div class="msg-cloud-bubble ${moodClass}">
             ${replyQuoteHtml}
@@ -2151,10 +2388,12 @@
     profileBtn.setAttribute('aria-expanded', 'false');
     customNameInput.value = state.username;
     modalSelectedColor = state.color;
+    modalSelectedIcon = resolveUserIcon(state.userIcon, state.userId || state.username);
     modalWidgetColors = { ...state.widgetColors };
     clearStagedAvatarPreview();
     modalEffectiveAvatarUrl = state.avatarUrl || '';
     renderColorPalette();
+    renderIconPalette();
     updateModalPreview();
     updateWidgetControlsUI();
     switchModalTab(initialTab);
@@ -2287,12 +2526,31 @@
     });
   }
 
+  function renderIconPalette() {
+    if (!iconPaletteEl) return;
+    iconPaletteEl.innerHTML = '';
+    DISTINGUISHED_USER_ICONS.forEach((icon, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `icon-choice-btn ${icon === modalSelectedIcon ? 'selected' : ''}`;
+      btn.textContent = icon;
+      btn.title = `Select ${icon} icon`;
+      btn.addEventListener('click', () => {
+        SoundFX.colorSelect(idx);
+        modalSelectedIcon = icon;
+        renderIconPalette();
+        updateModalPreview();
+      });
+      iconPaletteEl.appendChild(btn);
+    });
+  }
+
   function updateModalPreview() {
     const previewName = customNameInput.value.trim() || 'Guest';
     modalPreviewName.innerText = previewName;
     modalPreviewName.style.color = modalSelectedColor;
-    renderAvatarElement(modalPreviewAvatar, modalEffectiveAvatarUrl, previewName, modalSelectedColor);
-    renderAvatarElement(modalPhotoPreview, modalEffectiveAvatarUrl, previewName, modalSelectedColor);
+    applyBubbleAvatarVisual(modalPreviewAvatar, modalEffectiveAvatarUrl, previewName, modalSelectedColor, modalSelectedIcon);
+    renderAvatarElement(modalPhotoPreview, modalEffectiveAvatarUrl, previewName, modalSelectedColor, modalSelectedIcon);
     if (removeProfilePhotoBtn) {
       removeProfilePhotoBtn.classList.toggle('hidden', !modalEffectiveAvatarUrl);
     }
@@ -2341,11 +2599,13 @@
     clearStagedAvatarPreview();
     state.username = newName;
     state.color = modalSelectedColor;
+    state.userIcon = resolveUserIcon(modalSelectedIcon, state.userId || newName);
     state.avatarUrl = finalAvatarUrl || '';
     state.widgetColors = { ...modalWidgetColors };
 
     localStorage.setItem('wc_username', state.username);
     localStorage.setItem('wc_color', state.color);
+    localStorage.setItem('wc_user_icon', state.userIcon);
     localStorage.setItem('wc_avatar_url', state.avatarUrl);
     localStorage.setItem('wc_widget_colors', JSON.stringify(state.widgetColors));
 
@@ -2353,11 +2613,12 @@
     applyWidgetColors(state.widgetColors);
     profileModal.classList.add('hidden');
 
-    // Notify server of updated name, color, and saved avatar photo
+    // Notify server of updated name, color, saved avatar photo, and distinguished icon
     socket.emit('auth:guest_join', {
       username: state.username,
       color: state.color,
       avatarUrl: state.avatarUrl || null,
+      userIcon: state.userIcon,
       clientToken: state.clientToken,
       userId: state.userId
     });
@@ -2393,7 +2654,8 @@
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const profileWasOpen = !profileModal.classList.contains('hidden');
-      const modalOpen = !lightboxModal.classList.contains('hidden') || profileWasOpen;
+      const updateWasOpen = updateNoticeModal && !updateNoticeModal.classList.contains('hidden');
+      const modalOpen = !lightboxModal.classList.contains('hidden') || profileWasOpen || updateWasOpen;
       if (modalOpen) {
         SoundFX.modalClose();
       }
@@ -2411,6 +2673,7 @@
       closeAllReactionPickers();
       lightboxModal.classList.add('hidden');
       profileModal.classList.add('hidden');
+      if (updateNoticeModal) updateNoticeModal.classList.add('hidden');
     }
   });
 })();

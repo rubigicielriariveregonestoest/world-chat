@@ -8,8 +8,25 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
+const pkg = require('../package.json');
 const uploadRoutes = require('./upload');
 const registerSocketHandlers = require('./socketHandler');
+
+/*
+ * Application Release & Version Manifest
+ * Exposes the active server version, boot buildId, and release highlights via
+ * GET /api/version and Socket.IO so connected tabs can prompt users to update.
+ */
+const RELEASE_INFO = {
+  version: pkg.version || '1.1.0',
+  buildId: `${pkg.version || '1.1.0'}-${Date.now().toString(36)}`,
+  title: 'World Chat Update Available',
+  highlights: [
+    'Profile photos & distinguished user icons now appear on the left side of chat bubbles',
+    'Pick your own distinguished icon inside Customize Profile & Widgets',
+    'Restored 3D convex neomorphic chat bubbles with matched surrounding color shadows'
+  ]
+};
 
 const app = express();
 const server = http.createServer(app);
@@ -42,19 +59,31 @@ app.use(express.json());
 const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
 app.use('/uploads', express.static(UPLOAD_DIR));
 
-// Serve static frontend app
+// Serve static frontend app (revalidate HTML entry on each load)
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
-app.use(express.static(PUBLIC_DIR));
+app.use(express.static(PUBLIC_DIR, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 
 // API routes
 app.use('/api', uploadRoutes);
 
+app.get('/api/version', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ ...RELEASE_INFO, timestamp: new Date().toISOString() });
+});
+
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', name: 'World Chat Server', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', name: 'World Chat Server', version: RELEASE_INFO.version, timestamp: new Date().toISOString() });
 });
 
 // Fallback to index.html for SPA routing
 app.get('*', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
   res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
@@ -72,8 +101,8 @@ const io = new Server(server, {
   maxHttpBufferSize: 1e6 // 1MB buffer limit
 });
 
-// Attach socket event listeners
-registerSocketHandlers(io);
+// Attach socket event listeners along with authoritative release metadata
+registerSocketHandlers(io, RELEASE_INFO);
 
 server.listen(PORT, () => {
   console.log(`===============================================`);

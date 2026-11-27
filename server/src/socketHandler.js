@@ -25,7 +25,7 @@ function sanitizeUploadUrl(url) {
   return /^\/uploads\/[a-zA-Z0-9_.-]+\.(webp|gif|png|jpg|jpeg)$/.test(trimmed) ? trimmed : null;
 }
 
-const activeSockets = new Map(); // socket.id -> { userId, username, color, avatarUrl, clientToken, ip }
+const activeSockets = new Map(); // socket.id -> { userId, username, color, avatarUrl, userIcon, clientToken, ip }
 const typingUsers = new Map(); // clientToken -> { username, expiresAt }
 
 /*
@@ -33,7 +33,7 @@ const typingUsers = new Map(); // clientToken -> { username, expiresAt }
  * Deduplicates connected clients by clientToken so multi-tab users count once,
  * and cleans up expired typing states on a fixed 3-second heartbeat interval.
  */
-module.exports = function registerSocketHandlers(io) {
+module.exports = function registerSocketHandlers(io, releaseInfo = null) {
   function broadcastPresence() {
     // Unique user tokens to avoid counting multiple tabs as separate people
     const uniqueTokens = new Set();
@@ -46,6 +46,7 @@ module.exports = function registerSocketHandlers(io) {
           username: user.username,
           color: user.color,
           avatarUrl: user.avatarUrl || null,
+          userIcon: user.userIcon || db.pickDefaultUserIcon(user.userId || user.username),
           userId: user.userId
         });
       }
@@ -79,6 +80,11 @@ module.exports = function registerSocketHandlers(io) {
    * messages with rate-limit/mood checks, toggles reactions, and cleans up disconnects.
    */
   io.on('connection', (socket) => {
+    // Emit authoritative server release info so open tabs detect updates immediately
+    if (releaseInfo) {
+      socket.emit('world:version', releaseInfo);
+    }
+
     // Parse client IP safely handling reverse proxy headers (e.g. Render, Railway, Cloudflare)
     const rawXForwardedFor = socket.handshake.headers['x-forwarded-for'];
     const clientIP = rawXForwardedFor
@@ -105,12 +111,17 @@ module.exports = function registerSocketHandlers(io) {
 
       const avatarUrl = sanitizeUploadUrl(data.avatarUrl);
       const userId = data.userId || 'usr_' + clientToken.substring(0, 8);
+      const rawUserIcon = typeof data.userIcon === 'string' ? data.userIcon.trim() : '';
+      const userIcon = db.ALLOWED_USER_ICONS.includes(rawUserIcon)
+        ? rawUserIcon
+        : db.pickDefaultUserIcon(userId || username);
 
       const session = {
         userId,
         username,
         color,
         avatarUrl,
+        userIcon,
         clientToken,
         ip: clientIP
       };
@@ -208,6 +219,7 @@ module.exports = function registerSocketHandlers(io) {
         username: session.username,
         color: session.color,
         avatarUrl: session.avatarUrl || null,
+        userIcon: session.userIcon,
         text: cleanText,
         imageUrl,
         styleVariant,
