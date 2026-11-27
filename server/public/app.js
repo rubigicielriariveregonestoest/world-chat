@@ -511,7 +511,9 @@
     outgoingDark: ['#1e3b5a', '#164e63', '#1e3a8a', '#134e4a', '#2e2a5e'],
     outgoingLight: ['#dbe8f8', '#d5f0ec', '#e0e7ff', '#d1fae5', '#e0f2fe'],
     surfaceDark: ['#212b3c', '#1c2536', '#1e2f38', '#23283d', '#1f2937'],
-    surfaceLight: ['#eef3fa', '#e6eef8', '#eaf4f4', '#edeff8', '#f1f5f9']
+    surfaceLight: ['#eef3fa', '#e6eef8', '#eaf4f4', '#edeff8', '#f1f5f9'],
+    backdropDark: ['#1a2230', '#18202c', '#17252a', '#1e1f30', '#1c2329'],
+    backdropLight: ['#e7edf5', '#e3ecf5', '#e3f0ee', '#eae8f4', '#edf2f7']
   };
 
   function loadSavedWidgetColors() {
@@ -524,12 +526,13 @@
             accent: parsed.accent || '',
             incoming: parsed.incoming || '',
             outgoing: parsed.outgoing || '',
-            surface: parsed.surface || ''
+            surface: parsed.surface || '',
+            backdrop: parsed.backdrop || ''
           };
         }
       }
     } catch (_) {}
-    return { accent: '', incoming: '', outgoing: '', surface: '' };
+    return { accent: '', incoming: '', outgoing: '', surface: '', backdrop: '' };
   }
 
   const ADJECTIVES = ['Cosmic', 'Starlight', 'Astro', 'Nova', 'Nebula', 'Eclipse', 'Quantum', 'Solar', 'Zenith', 'Celestial', 'Lunar', 'Astral'];
@@ -723,10 +726,12 @@
   const widgetIncomingPicker = document.getElementById('widget-incoming-picker');
   const widgetOutgoingPicker = document.getElementById('widget-outgoing-picker');
   const widgetSurfacePicker = document.getElementById('widget-surface-picker');
+  const widgetBackdropPicker = document.getElementById('widget-backdrop-picker');
   const widgetAccentSwatches = document.getElementById('widget-accent-swatches');
   const widgetIncomingSwatches = document.getElementById('widget-incoming-swatches');
   const widgetOutgoingSwatches = document.getElementById('widget-outgoing-swatches');
   const widgetSurfaceSwatches = document.getElementById('widget-surface-swatches');
+  const widgetBackdropSwatches = document.getElementById('widget-backdrop-swatches');
   const previewIncomingBubble = document.getElementById('preview-incoming-bubble');
   const previewOutgoingBubble = document.getElementById('preview-outgoing-bubble');
   const resetWidgetsBtn = document.getElementById('reset-widgets-btn');
@@ -856,9 +861,63 @@
     return `#${toHex(r + delta)}${toHex(g + delta)}${toHex(b + delta)}`;
   }
 
+  // Derives convex 145deg dome gradient, translucent rim, and dual surrounding shadows for a custom bubble color
+  function buildBubbleNeomorphicTokens(hex, isLight) {
+    const topStop = adjustHexColor(hex, isLight ? 9 : 11);
+    const bottomStop = adjustHexColor(hex, isLight ? -12 : -14);
+    const { r, g, b } = hexToRgb(hex);
+    const rimLight = `rgba(${Math.min(255, r + 42)}, ${Math.min(255, g + 42)}, ${Math.min(255, b + 42)}, ${isLight ? 0.65 : 0.16})`;
+    const ambientShade = `rgba(${Math.max(0, Math.round(r * 0.42))}, ${Math.max(0, Math.round(g * 0.42))}, ${Math.max(0, Math.round(b * 0.42))}, ${isLight ? 0.24 : 0.42})`;
+    const shadow = [
+      `7px 7px 16px var(--neo-shadow-dark)`,
+      `3px 3px 10px ${ambientShade}`,
+      `-6px -6px 14px var(--neo-shadow-light)`,
+      `inset 1.5px 1.5px 3px ${rimLight}`,
+      `inset -1.5px -1.5px 3px rgba(${Math.max(0, Math.round(r * 0.3))}, ${Math.max(0, Math.round(g * 0.3))}, ${Math.max(0, Math.round(b * 0.3))}, ${isLight ? 0.18 : 0.36})`
+    ].join(', ');
+
+    return {
+      bg: `linear-gradient(145deg, ${topStop}, ${bottomStop})`,
+      text: computeContrastText(hex),
+      border: rimLight,
+      shadow
+    };
+  }
+
   function applyWidgetColors(colorsObj = state.widgetColors) {
     const root = document.documentElement;
     const isLight = state.theme === 'neomorphism-light';
+
+    // Surrounding canvas backdrop & global neomorphic shadow harmonization
+    if (isValidHexColor(colorsObj.backdrop)) {
+      const { r, g, b } = hexToRgb(colorsObj.backdrop);
+      const isDarkBackdrop = ((0.299 * r + 0.587 * g + 0.114 * b) / 255) < 0.52;
+      root.style.setProperty('--bg-primary', colorsObj.backdrop);
+      root.style.setProperty('--bg-secondary', adjustHexColor(colorsObj.backdrop, isDarkBackdrop ? -6 : -8));
+      root.style.setProperty(
+        '--neo-shadow-dark',
+        `rgba(${Math.max(0, Math.round(r * 0.45))}, ${Math.max(0, Math.round(g * 0.45))}, ${Math.max(0, Math.round(b * 0.45))}, ${isDarkBackdrop ? 0.78 : 0.44})`
+      );
+      root.style.setProperty(
+        '--neo-shadow-light',
+        `rgba(${Math.min(255, r + 55)}, ${Math.min(255, g + 55)}, ${Math.min(255, b + 55)}, ${isDarkBackdrop ? 0.10 : 0.92})`
+      );
+      root.style.setProperty(
+        '--neo-inset-dark',
+        `rgba(${Math.max(0, Math.round(r * 0.40))}, ${Math.max(0, Math.round(g * 0.40))}, ${Math.max(0, Math.round(b * 0.40))}, ${isDarkBackdrop ? 0.84 : 0.46})`
+      );
+      root.style.setProperty(
+        '--neo-inset-light',
+        `rgba(${Math.min(255, r + 55)}, ${Math.min(255, g + 55)}, ${Math.min(255, b + 55)}, ${isDarkBackdrop ? 0.08 : 0.90})`
+      );
+    } else {
+      root.style.removeProperty('--bg-primary');
+      root.style.removeProperty('--bg-secondary');
+      root.style.removeProperty('--neo-shadow-dark');
+      root.style.removeProperty('--neo-shadow-light');
+      root.style.removeProperty('--neo-inset-dark');
+      root.style.removeProperty('--neo-inset-light');
+    }
 
     if (isValidHexColor(colorsObj.accent)) {
       root.style.setProperty('--accent-cyan', colorsObj.accent);
@@ -871,21 +930,29 @@
     }
 
     if (isValidHexColor(colorsObj.incoming)) {
-      const shaded = adjustHexColor(colorsObj.incoming, isLight ? -6 : -10);
-      root.style.setProperty('--bubble-incoming-bg', `linear-gradient(145deg, ${colorsObj.incoming}, ${shaded})`);
-      root.style.setProperty('--bubble-incoming-text', computeContrastText(colorsObj.incoming));
+      const incTokens = buildBubbleNeomorphicTokens(colorsObj.incoming, isLight);
+      root.style.setProperty('--bubble-incoming-bg', incTokens.bg);
+      root.style.setProperty('--bubble-incoming-text', incTokens.text);
+      root.style.setProperty('--bubble-incoming-border', incTokens.border);
+      root.style.setProperty('--bubble-incoming-shadow', incTokens.shadow);
     } else {
       root.style.removeProperty('--bubble-incoming-bg');
       root.style.removeProperty('--bubble-incoming-text');
+      root.style.removeProperty('--bubble-incoming-border');
+      root.style.removeProperty('--bubble-incoming-shadow');
     }
 
     if (isValidHexColor(colorsObj.outgoing)) {
-      const shaded = adjustHexColor(colorsObj.outgoing, isLight ? -8 : -12);
-      root.style.setProperty('--bubble-outgoing-bg', `linear-gradient(145deg, ${colorsObj.outgoing}, ${shaded})`);
-      root.style.setProperty('--bubble-outgoing-text', computeContrastText(colorsObj.outgoing));
+      const outTokens = buildBubbleNeomorphicTokens(colorsObj.outgoing, isLight);
+      root.style.setProperty('--bubble-outgoing-bg', outTokens.bg);
+      root.style.setProperty('--bubble-outgoing-text', outTokens.text);
+      root.style.setProperty('--bubble-outgoing-border', outTokens.border);
+      root.style.setProperty('--bubble-outgoing-shadow', outTokens.shadow);
     } else {
       root.style.removeProperty('--bubble-outgoing-bg');
       root.style.removeProperty('--bubble-outgoing-text');
+      root.style.removeProperty('--bubble-outgoing-border');
+      root.style.removeProperty('--bubble-outgoing-shadow');
     }
 
     if (isValidHexColor(colorsObj.surface)) {
@@ -2007,16 +2074,19 @@
     const incomingList = isLight ? WIDGET_SWATCHES.incomingLight : WIDGET_SWATCHES.incomingDark;
     const outgoingList = isLight ? WIDGET_SWATCHES.outgoingLight : WIDGET_SWATCHES.outgoingDark;
     const surfaceList = isLight ? WIDGET_SWATCHES.surfaceLight : WIDGET_SWATCHES.surfaceDark;
+    const backdropList = isLight ? WIDGET_SWATCHES.backdropLight : WIDGET_SWATCHES.backdropDark;
 
     const defaultAccent = isLight ? '#2563eb' : '#38bdf8';
     const defaultIncoming = isLight ? '#f4f7fb' : '#253042';
     const defaultOutgoing = isLight ? '#dbe8f8' : '#1e3b5a';
     const defaultSurface = isLight ? '#eef3fa' : '#212b3c';
+    const defaultBackdrop = isLight ? '#e7edf5' : '#1a2230';
 
     if (widgetAccentPicker) widgetAccentPicker.value = isValidHexColor(modalWidgetColors.accent) ? modalWidgetColors.accent : defaultAccent;
     if (widgetIncomingPicker) widgetIncomingPicker.value = isValidHexColor(modalWidgetColors.incoming) ? modalWidgetColors.incoming : defaultIncoming;
     if (widgetOutgoingPicker) widgetOutgoingPicker.value = isValidHexColor(modalWidgetColors.outgoing) ? modalWidgetColors.outgoing : defaultOutgoing;
     if (widgetSurfacePicker) widgetSurfacePicker.value = isValidHexColor(modalWidgetColors.surface) ? modalWidgetColors.surface : defaultSurface;
+    if (widgetBackdropPicker) widgetBackdropPicker.value = isValidHexColor(modalWidgetColors.backdrop) ? modalWidgetColors.backdrop : defaultBackdrop;
 
     renderWidgetSwatches(widgetAccentSwatches, WIDGET_SWATCHES.accent, modalWidgetColors.accent, (hex) => {
       modalWidgetColors.accent = hex;
@@ -2038,16 +2108,20 @@
       updateWidgetControlsUI();
       applyWidgetColors(modalWidgetColors);
     });
+    renderWidgetSwatches(widgetBackdropSwatches, backdropList, modalWidgetColors.backdrop, (hex) => {
+      modalWidgetColors.backdrop = hex;
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+    });
 
+    // Clear inline overrides so live preview bubbles reflect CSS neomorphic tokens 1:1
     if (previewIncomingBubble) {
-      const inc = isValidHexColor(modalWidgetColors.incoming) ? modalWidgetColors.incoming : '';
-      previewIncomingBubble.style.background = inc || '';
-      previewIncomingBubble.style.color = inc ? computeContrastText(inc) : '';
+      previewIncomingBubble.style.background = '';
+      previewIncomingBubble.style.color = '';
     }
     if (previewOutgoingBubble) {
-      const out = isValidHexColor(modalWidgetColors.outgoing) ? modalWidgetColors.outgoing : '';
-      previewOutgoingBubble.style.background = out || '';
-      previewOutgoingBubble.style.color = out ? computeContrastText(out) : '';
+      previewOutgoingBubble.style.background = '';
+      previewOutgoingBubble.style.color = '';
     }
   }
 
@@ -2164,11 +2238,18 @@
       applyWidgetColors(modalWidgetColors);
     });
   }
+  if (widgetBackdropPicker) {
+    widgetBackdropPicker.addEventListener('input', (e) => {
+      modalWidgetColors.backdrop = e.target.value;
+      updateWidgetControlsUI();
+      applyWidgetColors(modalWidgetColors);
+    });
+  }
 
   if (resetWidgetsBtn) {
     resetWidgetsBtn.addEventListener('click', () => {
       SoundFX.click();
-      modalWidgetColors = { accent: '', incoming: '', outgoing: '', surface: '' };
+      modalWidgetColors = { accent: '', incoming: '', outgoing: '', surface: '', backdrop: '' };
       updateWidgetControlsUI();
       applyWidgetColors(modalWidgetColors);
       showToast('Color widgets reset to calm defaults (click Save to keep)', 'info');
