@@ -586,7 +586,7 @@
       highlights: [
         'Always synchronizes App Updates with each release using strict "Update x.y.z" semantic versioning',
         'Added full History of Changes timeline inside Settings -> App Updates',
-        'Recorded commit 50695b6 (Update 1.2.0) directly in the App Updates timeline'
+        'Added complete Update 1.2.0 and earlier release notes to the App Updates timeline'
       ]
     },
     {
@@ -1367,9 +1367,9 @@
       verSpan.textContent = formatUpdateLabel(entry.version);
       header.appendChild(verSpan);
 
-      const badgeText = (entry.commit && entry.commit !== 'latest')
-        ? `#${entry.commit}`
-        : (index === 0 ? 'Latest' : `Update ${entry.version || ''}`);
+      const badgeText = index === 0
+        ? 'Latest'
+        : (entry.updateNumber > 0 ? `Update #${entry.updateNumber}` : 'Initial');
       const commitSpan = document.createElement('span');
       commitSpan.className = 'update-history-commit';
       commitSpan.textContent = badgeText;

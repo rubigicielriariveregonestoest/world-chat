@@ -24,7 +24,7 @@ const RELEASE_HISTORY = [
     highlights: [
       'Always synchronizes App Updates with each release using strict "Update x.y.z" semantic versioning',
       'Added full History of Changes timeline inside Settings -> App Updates',
-      'Recorded commit 50695b6 (Update 1.2.0) directly in the App Updates timeline'
+      'Added complete Update 1.2.0 and earlier release notes to the App Updates timeline'
     ]
   },
   {
