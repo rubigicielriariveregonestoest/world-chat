@@ -1,6 +1,10 @@
-// World Chat — Client Application
+/*
+ * World Chat — Client Application Bootstrap & Tactile Sound Synthesizer
+ * Initializes the self-contained Web Audio API synthesizer providing zero-latency
+ * tactile feedback (clicks, menu opens, color swatch chimes, swipe & toast tones)
+ * without relying on external audio files.
+ */
 (() => {
-  // --- Audio Synthesizer (Web Audio API) ---
   let audioCtx = null;
   function getAudioContext() {
     if (!audioCtx) {
@@ -543,10 +547,16 @@
     };
   }
 
-  // --- Application State ---
+  /*
+   * Identity State, Noto Emoji Registries & Neomorphic Icon Assets
+   * Manages persisted guest profile credentials (including saved avatar photo URL),
+   * widget color state, structural UI SVG icons, Noto Color Emoji reaction glyphs,
+   * and the curated Noto Emoji tray for direct chat insertion.
+   */
   const state = {
     username: localStorage.getItem('wc_username') || '',
     color: localStorage.getItem('wc_color') || '',
+    avatarUrl: localStorage.getItem('wc_avatar_url') || '',
     clientToken: localStorage.getItem('wc_token') || '',
     userId: localStorage.getItem('wc_userId') || '',
     soundEnabled: localStorage.getItem('wc_sound') !== 'false',
@@ -562,6 +572,8 @@
     messageMood: 'default',
     stagedFile: null,
     stagedFileUrl: null,
+    stagedAvatarFile: null,
+    stagedAvatarPreviewUrl: null,
     replyTo: null,
     isUploading: false,
     isNearBottom: true,
@@ -600,7 +612,11 @@
     react: `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" class="neo-icon"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>`
   };
 
-  // --- Animated SVG Reactions Registry (Zero Raw Emojis) ---
+  /*
+   * Animated Noto Color Emoji Reactions & Chat Picker Registry
+   * Replaces custom SVG emoji illustrations with cross-platform Noto Color Emoji
+   * characters styled via CSS keyframe animations for both reactions and chat drafts.
+   */
   const REACTION_TYPES = ['heart', 'haha', 'wow', 'sad', 'angry'];
   const REACTION_LABELS = {
     heart: 'Heart',
@@ -610,12 +626,17 @@
     angry: 'Angry'
   };
   const ReactionIcons = {
-    heart: `<svg viewBox="0 0 24 24" class="reaction-svg react-heart" aria-hidden="true"><defs><linearGradient id="rg-heart" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fb7185"/><stop offset="100%" stop-color="#e11d48"/></linearGradient></defs><path fill="url(#rg-heart)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/><circle cx="7.5" cy="7.5" r="1.4" fill="rgba(255,255,255,0.55)"/></svg>`,
-    haha: `<svg viewBox="0 0 24 24" class="reaction-svg react-haha" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fbbf24"/><path d="M7.2 9.8c.7-.9 1.9-.9 2.6 0M14.2 9.8c.7-.9 1.9-.9 2.6 0" stroke="#78350f" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M7.5 13.5c1.1 2.7 3 4 4.5 4s3.4-1.3 4.5-4H7.5z" fill="#78350f"/><path d="M9.4 16c.8.8 1.7 1.2 2.6 1.2s1.8-.4 2.6-1.2c-.8-.6-1.7-.9-2.6-.9s-1.8.3-2.6.9z" fill="#fb7185"/></svg>`,
-    wow: `<svg viewBox="0 0 24 24" class="reaction-svg react-wow" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fcd34d"/><path d="M7.5 8.2c.8-.6 1.6-.6 2.2 0M14.3 8.2c.8-.6 1.6-.6 2.2 0" stroke="#78350f" stroke-width="1.5" stroke-linecap="round" fill="none"/><circle cx="8.8" cy="10.8" r="1.35" fill="#78350f"/><circle cx="15.2" cy="10.8" r="1.35" fill="#78350f"/><ellipse cx="12" cy="16" rx="2.1" ry="2.8" fill="#78350f"/></svg>`,
-    sad: `<svg viewBox="0 0 24 24" class="reaction-svg react-sad" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#60a5fa"/><circle cx="8.6" cy="10.5" r="1.3" fill="#1e3a8a"/><circle cx="15.4" cy="10.5" r="1.3" fill="#1e3a8a"/><path d="M8.5 16.4c1.1-1.3 2.3-1.8 3.5-1.8s2.4.5 3.5 1.8" stroke="#1e3a8a" stroke-width="1.8" stroke-linecap="round" fill="none"/><path class="sad-tear" d="M16.5 12.2c.8 1.2 1.2 2.1 1.2 2.8a1.2 1.2 0 1 1-2.4 0c0-.7.4-1.6 1.2-2.8z" fill="#e0f2fe"/></svg>`,
-    angry: `<svg viewBox="0 0 24 24" class="reaction-svg react-angry" aria-hidden="true"><defs><linearGradient id="rg-angry" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f97316"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><circle cx="12" cy="12" r="10" fill="url(#rg-angry)"/><path d="M7.2 8.5l3.2 1.5M16.8 8.5l-3.2 1.5" stroke="#450a0a" stroke-width="1.9" stroke-linecap="round"/><circle cx="8.8" cy="11.5" r="1.25" fill="#450a0a"/><circle cx="15.2" cy="11.5" r="1.25" fill="#450a0a"/><path d="M8.8 16.2c1-.9 2.1-1.3 3.2-1.3s2.2.4 3.2 1.3" stroke="#450a0a" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>`
+    heart: `<span class="noto-emoji react-heart" aria-hidden="true">❤️</span>`,
+    haha: `<span class="noto-emoji react-haha" aria-hidden="true">😂</span>`,
+    wow: `<span class="noto-emoji react-wow" aria-hidden="true">😮</span>`,
+    sad: `<span class="noto-emoji react-sad" aria-hidden="true">😢</span>`,
+    angry: `<span class="noto-emoji react-angry" aria-hidden="true">😡</span>`
   };
+  const NOTO_CHAT_EMOJIS = [
+    '😊', '😂', '🥹', '😍', '🤩', '😎',
+    '🙌', '👏', '🤝', '❤️', '✨', '🌟',
+    '🌍', '🚀', '🌙', '☀️', '🔥', '🎉'
+  ];
 
   // --- DOM Elements ---
   const onlineCountEl = document.getElementById('online-count');
@@ -664,6 +685,7 @@
   const beautifyBtn = document.getElementById('beautify-btn');
   const beautifyMoodDot = document.getElementById('beautify-mood-dot');
   const beautifyPopover = document.getElementById('beautify-popover');
+  const beautifyEmojiRow = document.getElementById('beautify-emoji-row');
   const polishMsgBtn = document.getElementById('polish-msg-btn');
   const beautifyMoodRow = document.getElementById('beautify-mood-row');
   const attachBtn = document.getElementById('attach-btn');
@@ -683,6 +705,10 @@
   const tabWidgetsBtn = document.getElementById('tab-widgets-btn');
   const tabIdentityPanel = document.getElementById('tab-identity-panel');
   const tabWidgetsPanel = document.getElementById('tab-widgets-panel');
+  const modalPhotoPreview = document.getElementById('modal-photo-preview');
+  const profilePhotoInput = document.getElementById('profile-photo-input');
+  const chooseProfilePhotoBtn = document.getElementById('choose-profile-photo-btn');
+  const removeProfilePhotoBtn = document.getElementById('remove-profile-photo-btn');
   const customNameInput = document.getElementById('custom-name-input');
   const colorPaletteEl = document.getElementById('color-palette');
   const saveProfileBtn = document.getElementById('save-profile-btn');
@@ -727,16 +753,32 @@
     }, duration);
   }
 
-  // --- UI Update Helpers ---
+  /*
+   * Header Avatar Renderer, Toggle Badges & Mobile-Fast Theme Engine
+   * Renders uploaded circular profile photos (with colored initial monogram
+   * fallback), synchronizes toggle badges, computes accessible widget colors, and
+   * freezes CSS transitions briefly during theme flips to prevent mobile lag.
+   */
+  function renderAvatarElement(el, avatarUrl, username, color) {
+    if (!el) return;
+    el.style.backgroundColor = color || 'var(--accent-cyan)';
+    if (avatarUrl) {
+      el.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = avatarUrl;
+      img.alt = username || 'Avatar';
+      el.appendChild(img);
+    } else {
+      el.innerHTML = '';
+      el.innerText = (username || '?').charAt(0).toUpperCase();
+    }
+  }
+
   function updateHeaderProfile() {
-    userAvatarEl.style.backgroundColor = state.color;
-    userAvatarEl.innerText = state.username.charAt(0);
+    renderAvatarElement(userAvatarEl, state.avatarUrl, state.username, state.color);
     userDisplayNameEl.innerText = state.username;
 
-    if (dropdownUserAvatar) {
-      dropdownUserAvatar.style.backgroundColor = state.color;
-      dropdownUserAvatar.innerText = state.username.charAt(0);
-    }
+    renderAvatarElement(dropdownUserAvatar, state.avatarUrl, state.username, state.color);
     if (dropdownUserName) {
       dropdownUserName.innerText = state.username;
     }
@@ -854,8 +896,11 @@
     const activeTheme = (theme === 'neomorphism-light' || theme === 'neomorphism' || theme === 'light')
       ? 'neomorphism-light'
       : 'neomorphism-dark';
+    const rootEl = document.documentElement;
+    rootEl.classList.add('theme-switching');
+
     state.theme = activeTheme;
-    document.documentElement.setAttribute('data-theme', activeTheme);
+    rootEl.setAttribute('data-theme', activeTheme);
     localStorage.setItem('worldchat_theme', activeTheme);
 
     if (themeBtn) {
@@ -881,13 +926,24 @@
     if (window.setCelestialTheme) {
       window.setCelestialTheme(activeTheme);
     }
+
+    // Release transition lock after the browser commits the single-frame theme repaint
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        rootEl.classList.remove('theme-switching');
+      });
+    });
   }
 
   updateHeaderProfile();
   updateTogglesUI();
   applyTheme(state.theme);
 
-  // --- Socket.IO Connection ---
+  /*
+   * Socket.IO Real-Time Transport & World Stream Handlers
+   * Authenticates the active guest profile (display name, accent, saved avatar)
+   * on connection and routes live history, chat broadcasts, reactions, and typing.
+   */
   const socket = io();
 
   socket.on('connect', () => {
@@ -895,6 +951,7 @@
     socket.emit('auth:guest_join', {
       username: state.username,
       color: state.color,
+      avatarUrl: state.avatarUrl || null,
       clientToken: state.clientToken,
       userId: state.userId
     });
@@ -1073,10 +1130,22 @@
       .replace(/>/g, '&gt;');
     const safeAuthorColor = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(msg.color) ? msg.color : '#38bdf8';
 
-    // Render author name externally above the bubble row (omitted on consecutive messages from the same sender)
-    const authorHtml = !isConsecutive
-      ? `<div class="msg-author-external" style="color: ${safeAuthorColor}">${safeAuthorName}</div>`
-      : '';
+    // Render sender avatar + display name externally above the bubble row
+    let authorHtml = '';
+    if (!isConsecutive) {
+      const safeAvatarUrl = (typeof msg.avatarUrl === 'string' && /^\/uploads\/[a-zA-Z0-9_.-]+\.(webp|gif|png|jpg|jpeg)$/.test(msg.avatarUrl.trim()))
+        ? msg.avatarUrl.trim()
+        : '';
+      const avatarTag = safeAvatarUrl
+        ? `<img src="${safeAvatarUrl}" class="msg-author-avatar" alt="${safeAuthorName}" loading="lazy">`
+        : '';
+      authorHtml = `
+        <div class="msg-author-row">
+          ${avatarTag}
+          <div class="msg-author-external" style="color: ${safeAuthorColor}">${safeAuthorName}</div>
+        </div>
+      `;
+    }
 
     // Render reply quote block if this message is replying to another message
     let replyQuoteHtml = '';
@@ -1599,6 +1668,45 @@
     return text.substring(0, 350);
   }
 
+  /*
+   * Message Beautifier, Noto Emoji Tray & Smart Polish Controls
+   * Wraps draft selections in bold/italic/highlight/mono tokens, inserts curated
+   * Noto Color Emojis at the composer cursor, polishes punctuation/spacing, and
+   * tags messages with calm/spotlight/greeting presentation moods before send.
+   */
+  function insertEmojiAtCursor(emoji) {
+    const start = messageInput.selectionStart ?? messageInput.value.length;
+    const end = messageInput.selectionEnd ?? messageInput.value.length;
+    const val = messageInput.value;
+    const nextVal = val.substring(0, start) + emoji + val.substring(end);
+    if (nextVal.length > 350) {
+      showToast('Message exceeds 350 character limit.', 'error');
+      return;
+    }
+    messageInput.value = nextVal;
+    messageInput.focus();
+    const pos = start + emoji.length;
+    messageInput.setSelectionRange(pos, pos);
+    messageInput.dispatchEvent(new Event('input'));
+    SoundFX.click();
+  }
+
+  if (beautifyEmojiRow) {
+    beautifyEmojiRow.innerHTML = '';
+    NOTO_CHAT_EMOJIS.forEach(emoji => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'emoji-insert-btn';
+      btn.innerText = emoji;
+      btn.title = `Insert ${emoji}`;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        insertEmojiAtCursor(emoji);
+      });
+      beautifyEmojiRow.appendChild(btn);
+    });
+  }
+
   if (beautifyBtn && beautifyPopover) {
     beautifyBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1936,6 +2044,25 @@
     }
   }
 
+  /*
+   * Profile Photo Picker, Identity Customization & Color Widgets Persistence
+   * Lets users choose an image from saved device files (previewed instantaneously
+   * in the modal, cropped/converted to 256x256 WebP via POST /api/avatar on save),
+   * edit display name and color widgets, and broadcast changes over Socket.IO.
+   */
+  let modalStagedAvatarFile = null;
+  let modalStagedAvatarPreview = '';
+  let modalEffectiveAvatarUrl = state.avatarUrl || '';
+
+  function clearStagedAvatarPreview() {
+    if (modalStagedAvatarPreview) {
+      URL.revokeObjectURL(modalStagedAvatarPreview);
+      modalStagedAvatarPreview = '';
+    }
+    modalStagedAvatarFile = null;
+    if (profilePhotoInput) profilePhotoInput.value = '';
+  }
+
   function openCustomizationModal(initialTab = 'identity') {
     SoundFX.modalOpen();
     profileDropdownMenu.classList.add('hidden');
@@ -1944,6 +2071,8 @@
     customNameInput.value = state.username;
     modalSelectedColor = state.color;
     modalWidgetColors = { ...state.widgetColors };
+    clearStagedAvatarPreview();
+    modalEffectiveAvatarUrl = state.avatarUrl || '';
     renderColorPalette();
     updateModalPreview();
     updateWidgetControlsUI();
@@ -1951,7 +2080,44 @@
     profileModal.classList.remove('hidden');
   }
 
-  // Open customization modal from the dropdown's Edit or Color Widgets buttons
+  if (chooseProfilePhotoBtn && profilePhotoInput) {
+    chooseProfilePhotoBtn.addEventListener('click', () => {
+      SoundFX.click();
+      profilePhotoInput.click();
+    });
+
+    profilePhotoInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        showToast('Invalid file type. Choose JPG, PNG, WEBP, or GIF.', 'error');
+        profilePhotoInput.value = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Profile photo exceeds 5MB size limit.', 'error');
+        profilePhotoInput.value = '';
+        return;
+      }
+      clearStagedAvatarPreview();
+      modalStagedAvatarFile = file;
+      modalStagedAvatarPreview = URL.createObjectURL(file);
+      modalEffectiveAvatarUrl = modalStagedAvatarPreview;
+      SoundFX.attach();
+      updateModalPreview();
+    });
+  }
+
+  if (removeProfilePhotoBtn) {
+    removeProfilePhotoBtn.addEventListener('click', () => {
+      SoundFX.detach();
+      clearStagedAvatarPreview();
+      modalEffectiveAvatarUrl = '';
+      updateModalPreview();
+    });
+  }
+
   if (editProfileBtn) {
     editProfileBtn.addEventListener('click', () => openCustomizationModal('identity'));
   }
@@ -2003,6 +2169,7 @@
 
   function closeAndRevertModalIfUnsaved() {
     SoundFX.modalClose();
+    clearStagedAvatarPreview();
     applyWidgetColors(state.widgetColors);
     profileModal.classList.add('hidden');
   }
@@ -2035,34 +2202,72 @@
     const previewName = customNameInput.value.trim() || 'Guest';
     modalPreviewName.innerText = previewName;
     modalPreviewName.style.color = modalSelectedColor;
-    modalPreviewAvatar.style.backgroundColor = modalSelectedColor;
-    modalPreviewAvatar.innerText = previewName.charAt(0).toUpperCase();
+    renderAvatarElement(modalPreviewAvatar, modalEffectiveAvatarUrl, previewName, modalSelectedColor);
+    renderAvatarElement(modalPhotoPreview, modalEffectiveAvatarUrl, previewName, modalSelectedColor);
+    if (removeProfilePhotoBtn) {
+      removeProfilePhotoBtn.classList.toggle('hidden', !modalEffectiveAvatarUrl);
+    }
   }
 
   customNameInput.addEventListener('input', updateModalPreview);
 
-  saveProfileBtn.addEventListener('click', () => {
+  saveProfileBtn.addEventListener('click', async () => {
     SoundFX.click();
     let newName = customNameInput.value.trim();
     if (!newName) newName = 'Guest#' + Math.floor(1000 + Math.random() * 9000);
     if (newName.length > 24) newName = newName.substring(0, 24);
 
+    let finalAvatarUrl = modalEffectiveAvatarUrl;
+
+    if (modalStagedAvatarFile) {
+      try {
+        saveProfileBtn.disabled = true;
+        saveProfileBtn.innerText = 'Uploading Photo...';
+        const formData = new FormData();
+        formData.append('avatar', modalStagedAvatarFile);
+
+        const res = await fetch('/api/avatar', {
+          method: 'POST',
+          headers: {
+            'x-client-id': state.clientToken
+          },
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to upload profile photo.');
+        }
+        finalAvatarUrl = data.avatarUrl;
+      } catch (err) {
+        showToast(err.message, 'error');
+        saveProfileBtn.disabled = false;
+        saveProfileBtn.innerText = 'Save Changes';
+        return;
+      } finally {
+        saveProfileBtn.disabled = false;
+        saveProfileBtn.innerText = 'Save Changes';
+      }
+    }
+
+    clearStagedAvatarPreview();
     state.username = newName;
     state.color = modalSelectedColor;
+    state.avatarUrl = finalAvatarUrl || '';
     state.widgetColors = { ...modalWidgetColors };
 
     localStorage.setItem('wc_username', state.username);
     localStorage.setItem('wc_color', state.color);
+    localStorage.setItem('wc_avatar_url', state.avatarUrl);
     localStorage.setItem('wc_widget_colors', JSON.stringify(state.widgetColors));
 
     updateHeaderProfile();
     applyWidgetColors(state.widgetColors);
     profileModal.classList.add('hidden');
 
-    // Notify server of updated name/color
     socket.emit('auth:guest_join', {
       username: state.username,
       color: state.color,
+      avatarUrl: state.avatarUrl || null,
       clientToken: state.clientToken,
       userId: state.userId
     });
@@ -2090,6 +2295,11 @@
     }
   });
 
+  /*
+   * Global Keyboard Shortcuts & Modal Escape Cleanup
+   * Closes lightbox, open reaction pickers, beautifier popovers, and profile modal
+   * on Escape while safely reverting any unsaved widget previews or staged avatars.
+   */
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const profileWasOpen = !profileModal.classList.contains('hidden');
@@ -2098,6 +2308,7 @@
         SoundFX.modalClose();
       }
       if (profileWasOpen) {
+        clearStagedAvatarPreview();
         applyWidgetColors(state.widgetColors);
       }
       if (beautifyPopover && !beautifyPopover.classList.contains('hidden')) {

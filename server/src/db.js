@@ -1,3 +1,8 @@
+/*
+ * Message Database Initialization & Disk Persistence
+ * Loads the rolling 500-message JSON store on startup and provides debounced
+ * asynchronous flushing plus emergency SIGINT persistence to prevent data loss.
+ */
 const fs = require('fs');
 const path = require('path');
 
@@ -5,14 +10,12 @@ const DATA_DIR = path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, 'messages.json');
 const MAX_MESSAGES = 500;
 
-// Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
 let messages = [];
 
-// Load existing messages on startup
 try {
   if (fs.existsSync(DB_FILE)) {
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
@@ -32,7 +35,7 @@ function schedulePersist() {
   persistTimeout = setTimeout(() => {
     persistTimeout = null;
     flushPersist();
-  }, 1000); // Debounce disk writes to at most once per second under load
+  }, 1000);
 }
 
 function flushPersist() {
@@ -50,7 +53,6 @@ function flushPersist() {
   });
 }
 
-// Emergency flush on server shutdown
 process.on('SIGINT', () => {
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(messages.slice(-MAX_MESSAGES), null, 2), 'utf-8');
@@ -58,6 +60,11 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
+/*
+ * Schema Normalization & Allowlists
+ * Restricts chat reactions and beautified message moods to validated enums
+ * so legacy message records and incoming payloads always normalize safely.
+ */
 const ALLOWED_REACTIONS = ['heart', 'haha', 'wow', 'sad', 'angry'];
 const ALLOWED_STYLE_VARIANTS = ['default', 'calm', 'spotlight', 'greeting'];
 
@@ -82,6 +89,11 @@ function normalizeReactions(raw) {
   return base;
 }
 
+/*
+ * Public Database API (Read, Append & Reaction Toggling)
+ * Exposes history retrieval, reply lookup, sanitized message creation (including
+ * optional avatarUrl and styleVariant), and real-time reaction state updates.
+ */
 module.exports = {
   ALLOWED_REACTIONS,
   ALLOWED_STYLE_VARIANTS,
@@ -89,6 +101,7 @@ module.exports = {
   getRecentMessages(limit = 100) {
     return messages.slice(-limit).map(m => ({
       ...m,
+      avatarUrl: m.avatarUrl || null,
       styleVariant: ALLOWED_STYLE_VARIANTS.includes(m.styleVariant) ? m.styleVariant : 'default',
       reactions: normalizeReactions(m.reactions)
     }));
@@ -109,6 +122,7 @@ module.exports = {
       userId: msg.userId,
       username: msg.username,
       color: msg.color || '#38bdf8',
+      avatarUrl: msg.avatarUrl || null,
       text: msg.text || '',
       imageUrl: msg.imageUrl || null,
       styleVariant,

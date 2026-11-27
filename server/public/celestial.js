@@ -1,6 +1,9 @@
-// World Chat — Celestial Universe Engine
-// Handles: Twinkling Starfield, 80% Diagonal Shooting Stars, 20% Meteor Showers
-
+/*
+ * Celestial Universe Engine & HiDPI Viewport Sizing
+ * Drives the fullscreen twinkling starfield, diagonal shooting stars, and meteor
+ * showers. Caps devicePixelRatio at 2x and trims mobile star density to keep
+ * rendering fluid across both desktop and lower-power mobile GPUs.
+ */
 (() => {
   const canvas = document.getElementById('celestial-canvas');
   if (!canvas) return;
@@ -8,21 +11,29 @@
 
   let width = 0;
   let height = 0;
-  let dpr = window.devicePixelRatio || 1;
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-  // --- Resize Handler with HiDPI support ---
   function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
     width = window.innerWidth;
     height = window.innerHeight;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     canvas.style.width = width + 'px';
     canvas.style.height = height + 'px';
-    ctx.scale(dpr, dpr);
+    if (typeof ctx.setTransform === 'function') {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    } else {
+      ctx.scale(dpr, dpr);
+    }
     initStars();
   }
 
-  // --- Current Theme Tracking & Dynamic Adaptation ---
+  /*
+   * Dynamic Theme Adaptation & Twinkling Starfield Registry
+   * Adapts particle hues instantaneously between Midnight Harbor (dark) and
+   * Serene Alabaster (light) themes while keeping star density responsive.
+   */
   let currentTheme = document.documentElement.getAttribute('data-theme') || 'neomorphism-dark';
 
   window.setCelestialTheme = function(theme) {
@@ -32,13 +43,12 @@
     }
   };
 
-  // --- Background Starfield ---
   const stars = [];
-  const STAR_COUNT = 160;
 
   function initStars() {
     stars.length = 0;
-    for (let i = 0; i < STAR_COUNT; i++) {
+    const starCount = width <= 640 ? 75 : 160;
+    for (let i = 0; i < starCount; i++) {
       stars.push({
         x: Math.random() * width,
         y: Math.random() * height,
@@ -346,26 +356,29 @@
   setTimeout(() => { if (!isIdle && isRunning) spawnShootingStar(); }, 600);
   scheduleCelestialEvent(3500);
 
-  // --- Main Animation Loop (60 FPS when active, 0 FPS when idle) ---
+  /*
+   * Animation Frame Renderer & Visibility Lifecycle
+   * Draws starfield particles without expensive save/restore stack churn per star,
+   * advances meteors, halts rendering cleanly at 0 FPS when idle or hidden, and
+   * restores active motion immediately on user interaction.
+   */
   function render() {
     if (!isRunning) return;
 
     ctx.clearRect(0, 0, width, height);
 
-    // 1. Draw twinkling background stars across full canvas
     for (let i = 0; i < stars.length; i++) {
       const star = stars[i];
       star.twinklePhase += star.twinkleSpeed;
       const dynamicAlpha = star.alpha * (0.6 + 0.4 * Math.sin(star.twinklePhase));
 
-      ctx.save();
       ctx.globalAlpha = Math.max(0, Math.min(1, dynamicAlpha));
       ctx.fillStyle = star.color;
       ctx.beginPath();
       ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     }
+    ctx.globalAlpha = 1;
 
     // 2. Update and draw active meteors across full viewport (no container masking)
     for (let i = meteors.length - 1; i >= 0; i--) {

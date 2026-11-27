@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <!-- Circular spherical viewport clip matching the in-app 3D globe mask -->
+    <clipPath id="sphere-clip">
+      <circle cx="16" cy="16" r="14"/>
+    </clipPath>
+    <!-- Deep space ocean radial base -->
+    <radialGradient id="ocean-depth" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#174578"/>
+      <stop offset="55%" stop-color="#0c2340"/>
+      <stop offset="100%" stop-color="#061224"/>
+    </radialGradient>
+    <!-- Day-to-night umbra terminator gradient -->
+    <linearGradient id="umbra-shade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="15%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="45%" stop-color="#000000" stop-opacity="0.18"/>
+      <stop offset="75%" stop-color="#000000" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.9"/>
+    </linearGradient>
+    <!-- Specular sun reflection on upper-left atmosphere -->
+    <radialGradient id="sun-glint" cx="26%" cy="24%" r="42%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.92"/>
+      <stop offset="22%" stop-color="#d2f5ff" stop-opacity="0.45"/>
+      <stop offset="55%" stop-color="#38bdf8" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Outer atmospheric sky halo -->
+  <circle cx="16" cy="16" r="14.6" fill="none" stroke="#38bdf8" stroke-width="0.9" stroke-opacity="0.55"/>
+
+  <!-- Clipped rotating Earth sphere scaled and tilted at 23.4 degrees -->
+  <g clip-path="url(#sphere-clip)">
+    <rect x="2" y="2" width="28" height="28" fill="url(#ocean-depth)"/>
+
+    <!-- Continents mapped directly from earth-map.svg around the central Atlantic/Americas/Africa hemisphere -->
+    <g transform="translate(16 16) rotate(-23.4) translate(-16 -16) translate(2 2) scale(0.14)">
+      <!-- North & Central America -->
+      <path fill="#10b981" d="M35,28 Q45,22 65,25 Q78,18 90,26 Q98,34 94,46 Q85,48 76,56 Q78,68 70,78 Q62,86 52,78 Q42,82 36,70 Q28,58 35,44 Z"/>
+      <path fill="#059669" d="M68,76 Q78,82 82,94 Q85,106 82,114 Q78,110 74,98 Q70,90 68,76 Z"/>
+      <!-- Greenland -->
+      <path fill="#e2e8f0" opacity="0.85" d="M106,16 Q122,12 128,24 Q125,36 112,38 Q104,32 106,16 Z"/>
+      <!-- South America -->
+      <path fill="#10b981" d="M84,116 Q102,118 114,130 Q124,146 116,164 Q106,182 98,192 Q94,188 94,174 Q88,154 80,140 Q76,126 84,116 Z"/>
+      <path fill="#047857" d="M90,128 Q104,136 108,150 Q102,168 94,174 Q88,156 86,138 Z"/>
+      <!-- Europe & Africa -->
+      <path fill="#10b981" d="M168,34 Q182,24 196,30 Q202,42 192,52 Q182,54 176,62 Q168,60 166,48 Z"/>
+      <path fill="#059669" d="M164,68 Q186,64 204,74 Q216,92 212,116 Q204,142 190,154 Q182,148 178,132 Q164,118 156,96 Q156,78 164,68 Z"/>
+      <path fill="#10b981" d="M172,76 Q194,72 202,86 Q200,108 194,124 Q182,138 180,146 Q174,130 168,110 Q162,94 172,76 Z"/>
+      <!-- Atmospheric cloud wisps -->
+      <path fill="#ffffff" opacity="0.22" d="M40,50 Q70,44 95,54 Q65,60 40,50 Z"/>
+      <path fill="#ffffff" opacity="0.25" d="M140,85 Q180,78 210,92 Q170,98 140,85 Z"/>
+      <!-- Antarctica ice shelf -->
+      <path fill="#e2e8f0" opacity="0.75" d="M0,190 Q50,185 100,191 Q150,184 200,190 L200,200 L0,200 Z"/>
+    </g>
+
+    <!-- Umbra shadow & specular sun sheen -->
+    <rect x="2" y="2" width="28" height="28" fill="url(#umbra-shade)"/>
+    <circle cx="16" cy="16" r="14" fill="url(#sun-glint)"/>
+  </g>
+</svg>

@@ -1,13 +1,22 @@
-// Simple token/IP based in-memory rate limiter
+/*
+ * Rate Limiter Store & Configuration
+ * Tracks per-clientToken and per-IP timestamps for text cooldowns, duplicate
+ * message spam detection, chat photo uploads, and profile avatar updates.
+ */
+const textTimestamps = new Map();
+const imageTimestamps = new Map();
+const avatarTimestamps = new Map();
+const lastUserMessages = new Map();
 
-const textTimestamps = new Map(); // key -> last message timestamp
-const imageTimestamps = new Map(); // key -> last image timestamp
-const lastUserMessages = new Map(); // key -> last text content
+const TEXT_COOLDOWN_MS = 1500;
+const IMAGE_COOLDOWN_MS = 15000;
+const AVATAR_COOLDOWN_MS = 3000;
 
-const TEXT_COOLDOWN_MS = 1500; // 1.5 seconds between text messages
-const IMAGE_COOLDOWN_MS = 15000; // 15 seconds between image uploads
-
-// Clean up old entries periodically (every 10 minutes)
+/*
+ * Periodic Memory Eviction
+ * Runs every 10 minutes to prune expired timestamp and message history entries
+ * so long-running server processes maintain bounded memory usage.
+ */
 setInterval(() => {
   const now = Date.now();
   for (const [key, ts] of textTimestamps.entries()) {
@@ -16,11 +25,19 @@ setInterval(() => {
   for (const [key, ts] of imageTimestamps.entries()) {
     if (now - ts > 120000) imageTimestamps.delete(key);
   }
+  for (const [key, ts] of avatarTimestamps.entries()) {
+    if (now - ts > 60000) avatarTimestamps.delete(key);
+  }
   for (const [key, entry] of lastUserMessages.entries()) {
     if (now - entry.time > 60000) lastUserMessages.delete(key);
   }
 }, 600000);
 
+/*
+ * Exported Cooldown & Anti-Spam Validators
+ * Provides check and record helpers used by WebSocket message dispatchers
+ * and Express file upload routes to enforce fair usage across IP and token keys.
+ */
 module.exports = {
   checkTextLimit(clientId) {
     const now = Date.now();
@@ -60,5 +77,20 @@ module.exports = {
 
   recordImage(clientId) {
     imageTimestamps.set(clientId, Date.now());
+  },
+
+  checkAvatarLimit(clientId) {
+    const now = Date.now();
+    const last = avatarTimestamps.get(clientId) || 0;
+    const diff = now - last;
+    if (diff < AVATAR_COOLDOWN_MS) {
+      const waitSeconds = Math.ceil((AVATAR_COOLDOWN_MS - diff) / 1000);
+      return { allowed: false, waitSeconds, reason: `Please wait ${waitSeconds}s before changing your profile photo again.` };
+    }
+    return { allowed: true };
+  },
+
+  recordAvatar(clientId) {
+    avatarTimestamps.set(clientId, Date.now());
   }
 };

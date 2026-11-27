@@ -1,16 +1,27 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="neomorphism-dark">
+<!--
+  Document Head, Static Globe Favicon & Font Preloading
+  Configures mobile-safe viewport constraints, links the static spherical globe
+  SVG favicon derived from earth-map.svg, loads the Neomorphic stylesheet, and
+  imports Google Fonts Inter alongside Noto Color Emoji for cross-platform emojis.
+-->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>World Chat — Global Live Chat</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><defs><radialGradient id=%22g%22 cx=%2235%25%22 cy=%2230%25%22 r=%2265%25%22><stop offset=%220%25%22 stop-color=%22%237dd3fc%22/><stop offset=%2250%25%22 stop-color=%22%230284c7%22/><stop offset=%22100%25%22 stop-color=%22%23082f49%22/></radialGradient></defs><circle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22url(%23g)%22/><path d=%22M5 16a11 5 0 0 0 22 0 11 5 0 0 0-22 0z%22 fill=%22none%22 stroke=%22%23e0f2fe%22 stroke-width=%221.5%22 stroke-dasharray=%222 1%22 opacity=%220.75%22/><circle cx=%2216%22 cy=%2216%22 r=%223%22 fill=%22%23ffffff%22 opacity=%220.9%22/></svg>">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
-  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
 </head>
+<!--
+  Main Application Shell & Celestial Backdrop
+  Mounts the ambient twinkling starfield/meteor canvas, floating toast feedback
+  stack, and single-row responsive neomorphic header housing the brand, online
+  presence badge, and profile settings dropdown.
+-->
 <body class="celestial-theme">
   <!-- Fullscreen Celestial Canvas (Twinkling Stars, Meteors, Shooting Stars) -->
   <canvas id="celestial-canvas" class="celestial-canvas"></canvas>
@@ -298,7 +309,12 @@
               <span id="beautify-mood-dot" class="beautify-mood-dot hidden"></span>
             </button>
 
-            <!-- Floating Message Beautifier Popover -->
+            <!--
+              Floating Message Beautifier & Noto Emoji Popover
+              Provides pre-send rich formatting tokens, one-click typography polish,
+              selectable message card moods, and a quick Noto Color Emoji palette for
+              direct insertion into the message draft.
+            -->
             <div id="beautify-popover" class="beautify-popover hidden">
               <div class="beautify-section-title">Format & Polish</div>
               <div class="beautify-format-row">
@@ -315,6 +331,8 @@
                   <span>Polish</span>
                 </button>
               </div>
+              <div class="beautify-section-title" style="margin-top: 8px;">Noto Emojis</div>
+              <div class="beautify-emoji-row" id="beautify-emoji-row"></div>
               <div class="beautify-section-title" style="margin-top: 8px;">Message Card Mood</div>
               <div class="beautify-mood-row" id="beautify-mood-row">
                 <button type="button" class="beautify-mood-btn active" data-mood="default">Clean</button>
@@ -380,7 +398,11 @@
     </div>
   </div>
 
-  <!-- Profile & Color Widgets Customization Modal -->
+  <!--
+    Profile Identity, Saved Photo Upload & Color Widgets Modal
+    Houses two tabs: Identity (display name, device photo upload, avatar accent color,
+    and live chat preview) and Color Widgets (theme accent, bubble tints, and reset).
+  -->
   <div id="profile-modal" class="modal-overlay hidden">
     <div class="modal-card modal-card-wide">
       <div class="modal-header">
@@ -396,9 +418,22 @@
         <button type="button" id="tab-widgets-btn" class="modal-tab-btn" role="tab" aria-selected="false">Color Widgets</button>
       </div>
       <div class="modal-body">
-        <!-- Tab 1: Identity -->
+        <!-- Tab 1: Identity & Custom Profile Photo -->
         <div id="tab-identity-panel" class="modal-tab-panel">
-          <label for="custom-name-input">Display Name</label>
+          <div class="profile-photo-section">
+            <label>Profile Photo</label>
+            <div class="profile-photo-row">
+              <div id="modal-photo-preview" class="user-avatar profile-photo-preview">?</div>
+              <div class="profile-photo-actions">
+                <input type="file" id="profile-photo-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
+                <button type="button" id="choose-profile-photo-btn" class="profile-photo-btn">Choose Photo</button>
+                <button type="button" id="remove-profile-photo-btn" class="profile-photo-btn remove hidden">Remove</button>
+              </div>
+            </div>
+            <span class="input-hint">JPG, PNG, WEBP, or GIF from your saved files (max 5MB).</span>
+          </div>
+
+          <label for="custom-name-input" style="margin-top: 14px;">Display Name</label>
           <input type="text" id="custom-name-input" maxlength="24" placeholder="Enter your nickname...">
           <span class="input-hint">Max 24 characters. Stored in your browser.</span>
 

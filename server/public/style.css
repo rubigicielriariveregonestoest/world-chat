@@ -1,4 +1,9 @@
-/* World Chat — Trust & Calm Neomorphism Design System */
+/*
+ * Global Theme Tokens & Design System Root
+ * Defines the dark "Midnight Harbor" neomorphic palette grounded in color
+ * psychology (trust, calm, security, structure), distinct incoming/outgoing
+ * message bubble variables, widget tint hooks, and the Inter + Noto Color Emoji font stack.
+ */
 :root,
 [data-theme="neomorphism-dark"] {
   --bg-primary: #1a2230;               /* Midnight Harbor Slate Base Canvas (Trust, Calm, Security) */
@@ -29,9 +34,22 @@
   --accent-green: #2dd4bf;
   --accent-red: #f87171;
   --accent-amber: #fbbf24;
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family: 'Inter', 'Noto Color Emoji', system-ui, -apple-system, sans-serif;
   --header-height: 64px;
   --footer-height: 72px;
+}
+
+/*
+ * Atomic Theme-Switch Guard & Base Document Reset
+ * Pauses element transitions during the single frame of light/dark toggling so
+ * mobile browsers repaint the full neomorphic DOM instantaneously without shadow
+ * interpolation lag, while keeping box-sizing and Noto-capable typography uniform.
+ */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+  animation-play-state: paused !important;
 }
 
 *, *::before, *::after {
@@ -100,7 +118,12 @@ body {
   }
 }
 
-/* Header as Floating Glass Mini-Bubbles */
+/*
+ * Header Bar & Neomorphic Glass-Pill Primitives
+ * Lays out the single-row top bar with safe-area padding so neomorphic shadows
+ * never clip on mobile notches, aligning the brand, presence, and profile pills
+ * using lightweight transform-only hover transitions.
+ */
 .app-header {
   min-height: var(--header-height);
   height: auto;
@@ -151,7 +174,7 @@ body {
   font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.16s ease;
   text-decoration: none;
 }
 
@@ -378,6 +401,11 @@ body {
   color: var(--accent-cyan);
 }
 
+/*
+ * Profile Trigger Pill, User Avatar & Dropdown Settings Menu
+ * Renders the circular avatar (supporting both monogram fallback and uploaded
+ * profile photos), truncated display name, and floating neomorphic settings menu.
+ */
 .profile-pill {
   height: 40px;
   background: var(--widget-surface-bg);
@@ -390,7 +418,7 @@ body {
   gap: 8px;
   cursor: pointer;
   color: var(--text-main);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -418,6 +446,15 @@ body {
   color: #fff;
   background-color: var(--accent-cyan);
   text-transform: uppercase;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .user-name {
@@ -694,18 +731,22 @@ body {
   line-height: 1.45;
 }
 
-/* --- Neomorphic Tactile Icons & Micro-Pods --- */
+/*
+ * Neomorphic Tactile Icons, Micro-Pods & Welcome Banner Rule Pills
+ * Styles inset icon sockets and convex rule chips using GPU-lightweight
+ * transform transitions so theme changes repaint without shadow lag.
+ */
 .neo-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  filter: drop-shadow(1px 1px 1.5px rgba(0, 0, 0, 0.6)) drop-shadow(-1px -1px 1px rgba(255, 255, 255, 0.12));
-  transition: transform 0.15s ease, filter 0.15s ease;
+  filter: drop-shadow(1px 1px 1.5px rgba(0, 0, 0, 0.55));
+  transition: transform 0.15s ease;
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .neo-icon {
-  filter: drop-shadow(1px 1.5px 2px rgba(168, 158, 142, 0.55)) drop-shadow(-1px -1px 1.5px rgba(255, 255, 255, 0.95));
+  filter: drop-shadow(1px 1.5px 1.5px var(--neo-shadow-dark));
 }
 
 .neo-icon-pod {
@@ -716,7 +757,7 @@ body {
   background: var(--bg-inset);
   box-shadow: inset 2px 2px 4px var(--neo-inset-dark), inset -1px -1px 2px var(--neo-inset-light);
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: transform 0.15s ease;
 }
 
 :is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .neo-icon-pod {
@@ -745,7 +786,7 @@ body {
   color: var(--text-main);
   font-weight: 600;
   letter-spacing: 0.2px;
-  transition: all 0.2s ease;
+  transition: transform 0.16s ease;
 }
 
 .banner-rules span .neo-icon-pod {
@@ -766,11 +807,16 @@ body {
   color: var(--accent-cyan);
 }
 
-/* Messages List & Floating Cloud Glass Bubbles */
+/*
+ * Chat Viewport, Message Stream & Distinct Incoming/Outgoing Bubbles
+ * Renders the scrollable message list with content-visibility isolation for fast
+ * mobile repaints, consecutive-message grouping, sender avatars, inline formatting,
+ * and trust/calm incoming vs outgoing neomorphic bubble styling.
+ */
 .messages-list {
   display: flex;
   flex-direction: column;
-  gap: 8px; /* Compact conversation spacing (reduced from 14px) */
+  gap: 8px;
 }
 
 .message-item {
@@ -779,8 +825,28 @@ body {
   align-items: flex-start;
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   max-width: 85%;
-  margin-bottom: 0px; /* Spacing cleanly handled by messages-list gap */
+  margin-bottom: 0px;
   position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 68px;
+}
+
+.msg-author-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+  padding-left: 4px;
+}
+
+.msg-author-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+  box-shadow: 1px 1px 4px var(--neo-shadow-dark);
+  flex-shrink: 0;
 }
 
 /* Consecutive Message Sticking (Same Sender) */
@@ -1359,7 +1425,11 @@ body {
   background: var(--accent-red);
 }
 
-/* Detached Floating Input System */
+/*
+ * Detached Composer Footer & Floating Circular Buttons
+ * Houses the bottom photo attachment button, inset text input cavity,
+ * swipe-to-send drag thumb, and beautifier popover trigger.
+ */
 .app-footer {
   padding: 14px 20px;
   background: transparent;
@@ -1375,7 +1445,6 @@ body {
   position: relative;
 }
 
-/* Floating Circular Buttons */
 .floating-circle-btn {
   width: 44px;
   height: 44px;
@@ -1393,7 +1462,7 @@ body {
   box-shadow: 
     5px 5px 12px var(--neo-shadow-dark), 
     -4px -4px 10px var(--neo-shadow-light);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
 }
 
@@ -3050,9 +3119,85 @@ body {
   border-color: transparent;
 }
 
-/* ==========================================================================
-   ANIMATED SVG REACTIONS (ZERO RAW EMOJIS)
-   ========================================================================== */
+/*
+ * Animated Noto Color Emoji Reactions, Profile Photo Picker & Mobile GPU Tweaks
+ * Styles the Noto emoji picker grid in the composer, animated Noto Color Emoji
+ * reaction pills and picker buttons (replacing SVG face illustrations), circular
+ * saved-photo upload controls, and scroll background-attachment on mobile devices.
+ */
+.profile-photo-section {
+  margin-bottom: 4px;
+}
+
+.profile-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.profile-photo-preview {
+  width: 52px;
+  height: 52px;
+  font-size: 1.2rem;
+  box-shadow: 4px 4px 10px var(--neo-shadow-dark), -3px -3px 8px var(--neo-shadow-light);
+}
+
+.profile-photo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-photo-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--accent-cyan);
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 3px 3px 7px var(--neo-shadow-dark), -2px -2px 6px var(--neo-shadow-light);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-photo-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-cyan);
+}
+
+.profile-photo-btn.remove {
+  color: var(--accent-red);
+}
+
+.beautify-emoji-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.emoji-insert-btn {
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--bg-inset);
+  font-family: 'Noto Color Emoji', var(--font-family) !important;
+  font-size: 1.05rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.emoji-insert-btn:hover {
+  transform: scale(1.16);
+  border-color: var(--accent-cyan);
+}
+
 .msg-bubble-col {
   display: flex;
   flex-direction: column;
@@ -3076,8 +3221,8 @@ body {
 }
 
 .reaction-pick-btn {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   background: var(--bg-inset);
@@ -3086,7 +3231,7 @@ body {
   justify-content: center;
   cursor: pointer;
   padding: 0;
-  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), background 0.16s ease;
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reaction-pick-btn:hover {
@@ -3106,8 +3251,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 24px;
-  padding: 0 8px;
+  height: 25px;
+  padding: 0 9px;
   border-radius: 999px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -3116,7 +3261,7 @@ body {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 2px 2px 6px var(--neo-shadow-dark), -2px -2px 5px var(--neo-shadow-light);
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
 .reaction-pill:hover {
@@ -3131,45 +3276,42 @@ body {
   box-shadow: inset 2px 2px 4px var(--neo-inset-dark), inset -1px -1px 3px var(--neo-inset-light);
 }
 
-.reaction-svg {
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-  flex-shrink: 0;
-  overflow: visible;
+.noto-emoji {
+  font-family: 'Noto Color Emoji', var(--font-family) !important;
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  will-change: transform;
 }
 
-.reaction-pick-btn .reaction-svg {
-  width: 20px;
-  height: 20px;
+.reaction-pick-btn .noto-emoji {
+  font-size: 1.22rem;
 }
 
-/* Bespoke Keyframe Animations for Each Reaction */
-.reaction-svg.react-heart {
+.noto-emoji.react-heart {
   animation: reactHeartBeat 1.8s ease-in-out infinite;
   transform-origin: center;
 }
 
-.reaction-svg.react-haha {
+.noto-emoji.react-haha {
   animation: reactHahaBounce 1.4s ease-in-out infinite;
   transform-origin: center bottom;
 }
 
-.reaction-svg.react-wow {
+.noto-emoji.react-wow {
   animation: reactWowGasp 1.7s ease-in-out infinite;
   transform-origin: center;
 }
 
-.reaction-svg.react-sad {
+.noto-emoji.react-sad {
   animation: reactSadSway 2.2s ease-in-out infinite;
   transform-origin: center;
 }
 
-.reaction-svg.react-sad .sad-tear {
-  animation: reactSadTearDrop 1.8s ease-in infinite;
-}
-
-.reaction-svg.react-angry {
+.noto-emoji.react-angry {
   animation: reactAngryShake 1.2s ease-in-out infinite;
   transform-origin: center;
 }
@@ -3201,14 +3343,7 @@ body {
 
 @keyframes reactSadSway {
   0%, 100% { transform: rotate(0deg) translateY(0); }
-  50% { transform: rotate(-5deg) translateY(1.5px); }
-}
-
-@keyframes reactSadTearDrop {
-  0% { opacity: 0; transform: translateY(-1px); }
-  30% { opacity: 1; }
-  90% { opacity: 0.9; transform: translateY(3.5px); }
-  100% { opacity: 0; transform: translateY(4px); }
+  50% { transform: rotate(-6deg) translateY(1.5px); }
 }
 
 @keyframes reactAngryShake {
@@ -3223,6 +3358,13 @@ body {
   0% { transform: scale(0.78); }
   50% { transform: scale(1.2); }
   100% { transform: scale(1); }
+}
+
+@media (max-width: 768px) {
+  /* Prevent mobile browsers from performing full-viewport software repaints on gradient backgrounds */
+  body {
+    background-attachment: scroll;
+  }
 }
 
 @media (max-width: 640px) {
