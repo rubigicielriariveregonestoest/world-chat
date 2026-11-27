@@ -758,7 +758,7 @@
 
   socket.on('presence:update', (data) => {
     const count = data.onlineCount || 1;
-    onlineCountEl.innerText = `${count.toLocaleString()} online in World Chat`;
+    onlineCountEl.innerHTML = `<span class="online-num">${count.toLocaleString()}</span> online<span class="online-room-suffix"> in World Chat</span>`;
   });
 
   socket.on('world:history', (historyMessages) => {
