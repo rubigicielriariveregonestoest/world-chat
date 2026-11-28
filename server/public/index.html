@@ -9,7 +9,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="worldchat-version" content="1.5.0">
+  <meta name="worldchat-version" content="1.6.0">
   <title>World Chat — Global Live Chat</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
@@ -30,6 +30,30 @@
 
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
+
+  <!--
+    Idle Chat Pop Notification Card (PC & Mobile)
+    Floats smoothly into view when another user sends a message while this client
+    is idle, backgrounded, or viewing another app, with instant Jump-to-Chat.
+  -->
+  <div id="idle-notif-container" class="idle-notif-container hidden" role="status" aria-live="polite">
+    <div id="idle-notif-card" class="idle-notif-card">
+      <div id="idle-notif-avatar" class="msg-bubble-avatar idle-notif-avatar">?</div>
+      <div class="idle-notif-body">
+        <div class="idle-notif-meta">
+          <span class="idle-notif-tag">New chat while idle</span>
+          <span id="idle-notif-author" class="idle-notif-author">Guest</span>
+        </div>
+        <div id="idle-notif-text" class="idle-notif-text">Sent a message</div>
+      </div>
+      <button type="button" id="idle-notif-jump-btn" class="idle-notif-jump-btn">View</button>
+      <button type="button" id="idle-notif-close-btn" class="close-btn idle-notif-close" title="Dismiss notification" aria-label="Dismiss">
+        <svg class="neo-icon" viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
 
   <!-- Main App Shell -->
   <div class="chat-app">
@@ -140,6 +164,28 @@
                 <span class="dropdown-item-badge theme">Custom</span>
               </button>
 
+              <!-- Idle Chat Pop Notifications Toggle -->
+              <button type="button" id="toggle-idle-notif-btn" class="dropdown-item-btn" title="Notify when someone chats while idle (PC & Mobile)">
+                <span class="dropdown-item-icon neo-icon-pod" id="idle-notif-icon">
+                  <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                  </svg>
+                </span>
+                <span class="dropdown-item-label">Idle Alerts</span>
+                <span class="dropdown-item-badge on" id="idle-notif-badge">On</span>
+              </button>
+
+              <!-- Discord iFrame Embed Generator -->
+              <button type="button" id="open-discord-iframe-btn" class="dropdown-item-btn" title="Copy Discord-ready iframe code or preview embed">
+                <span class="dropdown-item-icon neo-icon-pod">
+                  <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M19 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm-7 13l-4.5-4.5 1.41-1.41L12 14.17l3.09-3.08L16.5 12.5 12 17zm0-6.5L7.5 6h9L12 10.5z"/>
+                  </svg>
+                </span>
+                <span class="dropdown-item-label">Discord iFrame</span>
+                <span class="dropdown-item-badge theme">Embed</span>
+              </button>
+
               <!-- What's New & App Update History in Settings -->
               <button type="button" id="check-update-btn" class="dropdown-item-btn" title="View App Updates & History of Changes">
                 <span class="dropdown-item-icon neo-icon-pod">
@@ -148,7 +194,7 @@
                   </svg>
                 </span>
                 <span class="dropdown-item-label">App Updates</span>
-                <span class="dropdown-item-badge on" id="dropdown-version-badge">Update 1.5.0</span>
+                <span class="dropdown-item-badge on" id="dropdown-version-badge">Update 1.6.0</span>
               </button>
             </div>
           </div>
@@ -430,7 +476,7 @@
             </svg>
           </span>
           <span>App Updates</span>
-          <span id="update-version-badge" class="update-version-pill">Update 1.5.0</span>
+          <span id="update-version-badge" class="update-version-pill">Update 1.6.0</span>
         </h3>
         <button type="button" id="close-update-notice" class="close-btn" title="Close">
           <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
@@ -440,13 +486,16 @@
       </div>
       <div class="modal-body">
         <p id="update-notice-subtitle" class="update-notice-subtitle">
-          World Chat Update 1.5.0 is ready! Review the changes below or click Update to apply.
+          World Chat Update 1.6.0 is ready! Review Latest Highlights below or click Update to apply.
         </p>
         <div class="update-highlights-card">
           <div class="update-highlights-heading">Latest Highlights</div>
           <ul id="update-highlights-list" class="update-highlights-list"></ul>
         </div>
-        <div id="update-history-section" class="update-history-section">
+        <p id="update-popup-history-hint" class="input-hint" style="margin-top: 10px;">
+          To view earlier patches, open <strong>Settings &rarr; App Updates</strong> anytime.
+        </p>
+        <div id="update-history-section" class="update-history-section hidden">
           <div class="update-highlights-heading">History of Changes</div>
           <div id="update-history-list" class="update-history-list"></div>
         </div>
@@ -670,6 +719,42 @@
       <div class="modal-footer update-actions-row">
         <button type="button" id="toggle-active-reaction-btn" class="btn-secondary-neo">React</button>
         <button type="button" id="close-reaction-users-btn" class="primary-btn update-confirm-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    Discord iFrame Embed Generator Modal
+    Provides a ready-to-copy Discord-compatible <iframe> embed snippet and a link
+    to the dedicated Discord Activity / Embed preview wrapper (/discord-iframe.html).
+  -->
+  <div id="discord-iframe-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="discord-iframe-title">
+    <div class="modal-card discord-modal-box">
+      <div class="modal-header">
+        <h3 id="discord-iframe-title">
+          <span class="neo-icon-pod update-icon-pod">
+            <svg class="neo-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M19 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm-7 13l-4.5-4.5 1.41-1.41L12 14.17l3.09-3.08L16.5 12.5 12 17z"/>
+            </svg>
+          </span>
+          <span>Discord iFrame Embed</span>
+        </h3>
+        <button type="button" id="close-discord-iframe" class="close-btn" title="Close">
+          <svg class="neo-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="update-notice-subtitle">
+          Use this Discord-compatible <code>&lt;iframe&gt;</code> embed (pre-configured with <code>?embed=discord</code> and Discord Activity CSP framing headers).
+        </p>
+        <textarea id="discord-iframe-code" class="discord-iframe-code" readonly rows="6"></textarea>
+        <span class="input-hint">Direct frame preview: <a href="/discord-iframe.html" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan);">/discord-iframe.html</a></span>
+      </div>
+      <div class="modal-footer update-actions-row">
+        <a href="/discord-iframe.html" target="_blank" rel="noopener noreferrer" class="btn-secondary-neo" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">Preview Frame</a>
+        <button type="button" id="copy-discord-iframe-btn" class="primary-btn update-confirm-btn">Copy iFrame Code</button>
       </div>
     </div>
   </div>

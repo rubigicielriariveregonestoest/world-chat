@@ -4381,3 +4381,140 @@ body {
   color: var(--accent-calm);
   border: 1px solid var(--border-color);
 }
+
+/*
+ * Idle Chat Pop Notification (PC & Mobile) & Discord iFrame Embed Mode
+ * Floats an interactive pop card above the viewport when another user chats
+ * while this user is idle or backgrounded, plus compact ?embed=discord sizing.
+ */
+.idle-notif-container {
+  position: fixed;
+  top: 66px;
+  right: 16px;
+  z-index: 210;
+  max-width: min(360px, calc(100vw - 24px));
+  pointer-events: auto;
+}
+
+.idle-notif-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-cyan);
+  box-shadow: 10px 10px 24px var(--neo-shadow-dark), -6px -6px 16px var(--neo-shadow-light);
+  animation: idleNotifPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:is([data-theme="neomorphism-light"], [data-theme="neomorphism"]) .idle-notif-card {
+  border-color: var(--accent-cyan);
+  box-shadow: 8px 8px 20px var(--neo-shadow-dark), -6px -6px 16px var(--neo-shadow-light);
+}
+
+.idle-notif-avatar {
+  width: 34px;
+  height: 34px;
+}
+
+.idle-notif-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.idle-notif-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.idle-notif-tag {
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-calm);
+}
+
+.idle-notif-author {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.idle-notif-text {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.idle-notif-jump-btn {
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-cyan);
+  color: var(--accent-btn-text);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 6px 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 2px 2px 6px var(--neo-shadow-dark);
+}
+
+.idle-notif-jump-btn:hover {
+  background: var(--accent-hover);
+}
+
+@media (max-width: 640px) {
+  .idle-notif-container {
+    top: max(56px, env(safe-area-inset-top, 12px) + 46px);
+    left: 12px;
+    right: 12px;
+    max-width: none;
+  }
+}
+
+@keyframes idleNotifPopIn {
+  0% { opacity: 0; transform: translateY(-12px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.discord-modal-box {
+  max-width: 480px;
+}
+
+.discord-iframe-code {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-inset);
+  color: var(--text-main);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  resize: none;
+  box-shadow: inset 2px 2px 6px var(--neo-inset-dark), inset -1px -1px 4px var(--neo-inset-light);
+}
+
+html.embed-discord .app-header {
+  padding: 8px 12px 6px 12px;
+  min-height: 46px;
+}
+
+html.embed-discord .world-banner {
+  padding: 14px 12px;
+  margin-bottom: 8px;
+}
+
+html.embed-discord .app-footer {
+  padding: 8px 12px;
+}

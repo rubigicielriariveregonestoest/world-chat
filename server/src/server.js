@@ -26,10 +26,21 @@ const PORT = process.env.PORT || 4000;
 // Trust reverse proxy (e.g. Render, Railway, Fly.io, Cloudflare) for real client IPs
 app.set('trust proxy', 1);
 
-// Security Headers Middleware
+// Security & Discord-Compatible Framing Headers Middleware
+const DISCORD_FRAME_ANCESTORS = [
+  "'self'",
+  'https://discord.com',
+  'https://*.discord.com',
+  'https://ptb.discord.com',
+  'https://canary.discord.com',
+  'https://*.discordsays.com',
+  'http://localhost:*',
+  'http://127.0.0.1:*'
+].join(' ');
+
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Content-Security-Policy', `frame-ancestors ${DISCORD_FRAME_ANCESTORS}`);
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   next();
 });

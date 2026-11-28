@@ -6,6 +6,43 @@
  */
 // World Chat — Client Application
 (() => {
+  // --- Discord Embed Mode & Cross-Origin Safe Storage ---
+  const urlParams = new URLSearchParams(window.location.search);
+  const isDiscordEmbed = urlParams.get('embed') === 'discord';
+  if (isDiscordEmbed) {
+    document.documentElement.classList.add('embed-discord');
+  }
+
+  const memoryStorageFallback = new Map();
+  function safeStorageGet(key) {
+    try {
+      if (window.localStorage) {
+        return window.localStorage.getItem(key);
+      }
+    } catch (_) {}
+    try {
+      if (window.sessionStorage) {
+        return window.sessionStorage.getItem(key);
+      }
+    } catch (_) {}
+    return memoryStorageFallback.has(key) ? memoryStorageFallback.get(key) : null;
+  }
+
+  function safeStorageSet(key, value) {
+    const strVal = String(value);
+    memoryStorageFallback.set(key, strVal);
+    try {
+      if (window.localStorage) {
+        window.localStorage.setItem(key, strVal);
+      }
+    } catch (_) {}
+    try {
+      if (window.sessionStorage) {
+        window.sessionStorage.setItem(key, strVal);
+      }
+    } catch (_) {}
+  }
+
   // --- Audio Synthesizer (Web Audio API) ---
   let audioCtx = null;
   function getAudioContext() {
@@ -674,7 +711,7 @@
       'neomorphism-light': { ...EMPTY_WIDGET_COLORS }
     };
     try {
-      const raw = localStorage.getItem('wc_widget_colors');
+      const raw = safeStorageGet('wc_widget_colors');
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object') {
@@ -695,7 +732,7 @@
   const NOUNS = ['Pulsar', 'Voyager', 'Comet', 'Falcon', 'Orion', 'Nomad', 'Spark', 'Phoenix', 'Star', 'Specter', 'Drifter', 'Echo'];
 
   const DISTINGUISHED_USER_ICONS = ['🌟', '🚀', '🌙', '☀️', '🪐', '🔥', '⚡', '🧭', '🦋', '🦊', '🐬', '💎'];
-  const CLIENT_APP_VERSION = '1.5.0';
+  const CLIENT_APP_VERSION = '1.6.0';
 
   function formatUpdateLabel(version) {
     const clean = String(version || '').trim().replace(/^v/i, '');
@@ -704,10 +741,22 @@
 
   const DEFAULT_RELEASE_HISTORY = [
     {
+      version: '1.6.0',
+      label: formatUpdateLabel('1.6.0'),
+      updateNumber: 6,
+      commit: 'latest',
+      title: 'Idle Pop Notifications, Popup History Split & Discord iFrame',
+      highlights: [
+        'Added PC and mobile idle pop notifications (floating jump-to-chat card, tab badge, and browser alerts) whenever someone chats while you are idle or away',
+        'Update popups now showcase only Latest Highlights while Settings -> App Updates holds the complete traced History of Changes',
+        'Added Discord-ready iframe embedding with adaptive layout mode (?embed=discord) and copyable embed generator'
+      ]
+    },
+    {
       version: '1.5.0',
       label: formatUpdateLabel('1.5.0'),
       updateNumber: 5,
-      commit: 'latest',
+      commit: 'da52813',
       title: 'Light Mood Readability, Dark Hover Parity & Reaction Users List',
       highlights: [
         'Refined Light-theme Message Card Mood effects with airy pastel tones so message text stays bright and readable',
@@ -722,7 +771,7 @@
       commit: '73d1de9',
       title: 'Animated Message Card Moods, 3s Soundscapes & Light Theme Visibility',
       highlights: [
-        'Upgraded Calm Note (wind, swirling leaves, storm, thunder & lightning), Spotlight (LED uplights, waving spotlights & inner glow), and Greeting (endless confetti, top-left party hat & proportionate sun rays) into endless behind-text bubble animations',
+        'Upgraded Calm Note (wind, swirling leaves, storm & lightning), Spotlight (LED uplights, waving beams & inner glow), and Greeting (confetti, top-left party hat & proportionate sun rays) into endless behind-text bubble animations',
         'Made all Message Card Mood effects clearly visible across both Serene Light and Midnight Dark themes',
         'Added bespoke 3-second fading audio effects per mood plus a dedicated 5-second Message Card Mood cooldown'
       ]
@@ -734,9 +783,8 @@
       commit: 'be3aaea',
       title: 'App Updates History & Semantic Versioning',
       highlights: [
-        'Always synchronizes App Updates with each release using strict "Update x.y.z" semantic versioning',
-        'Added full History of Changes timeline inside Settings -> App Updates',
-        'Added complete Update 1.2.0 and earlier release notes to the App Updates timeline'
+        'Synchronized App Updates with strict "Update x.y.z" semantic versioning across Settings and live notifications',
+        'Added the scrollable History of Changes timeline inside Settings -> App Updates'
       ]
     },
     {
@@ -748,30 +796,80 @@
       highlights: [
         'Isolated customized Color Widgets per theme (Midnight Dark vs. Serene Light) so neither overrides the other',
         'Added owner-only message deletion with accidental-tap confirmation and clean consecutive group promotion',
-        'Added caring, non-scary upload reminders plus >5 MB auto-resize, flexible image formats, and ephemeral-proof avatars'
+        'Added caring upload reminders plus >5 MB auto-resize, flexible image formats, and ephemeral-proof avatars'
+      ]
+    },
+    {
+      version: '1.1.2',
+      label: formatUpdateLabel('1.1.2'),
+      updateNumber: 1,
+      commit: 'be99c11',
+      title: 'Left Bubble Avatars, Distinguished User Icons & Update Notice Popup',
+      highlights: [
+        'Moved user profile photos onto the left side of chat bubbles paired with each user\'s distinguished icon',
+        'Added selectable distinguished icons in Customize Profile & Widgets and live Update Notice prompts'
+      ]
+    },
+    {
+      version: '1.1.1',
+      label: formatUpdateLabel('1.1.1'),
+      updateNumber: 1,
+      commit: '11fcb50',
+      title: 'Noto Color Emojis, Globe Favicon, Profile Photos & Bubble Depth',
+      highlights: [
+        'Enabled Noto Color Emoji across reaction pills and chat drafting plus static globe sphere favicon',
+        'Added saved-file custom profile photo cropping, mobile theme-switch speedups, and unclipped 3D convex bubble shadows'
       ]
     },
     {
       version: '1.1.0',
       label: formatUpdateLabel('1.1.0'),
       updateNumber: 1,
-      commit: 'be99c11',
-      title: 'Left Bubble Avatars, Distinguished User Icons & Update Notice Popup',
+      commit: '44f7969',
+      title: 'Trust & Calm Rebrand, Color Widgets, Beautifier & Reactions',
       highlights: [
-        'Moved user profile photos onto the left side of chat bubbles paired with each user\'s distinguished icon',
-        'Added selectable distinguished icons in Customize Profile & Widgets',
-        'Introduced the live Update Notice Popup and Settings -> App Updates checker'
+        'Introduced Midnight Harbor Dark & Serene Alabaster Light neomorphic themes and customizable Color Widgets',
+        'Launched pre-send message beautifier formatting, mood tags, and animated emoji reactions'
+      ]
+    },
+    {
+      version: '1.0.3',
+      label: formatUpdateLabel('1.0.3'),
+      updateNumber: 0,
+      commit: '31be698',
+      title: 'Mobile Header Alignment & Single-Row Presence Pill',
+      highlights: [
+        'Aligned header pills with safe-area padding and kept the live online counter compact on small mobile viewports'
+      ]
+    },
+    {
+      version: '1.0.2',
+      label: formatUpdateLabel('1.0.2'),
+      updateNumber: 0,
+      commit: 'd984559',
+      title: 'Tactile Dark & Harmonized Neomorphism Refinement',
+      highlights: [
+        'Unified convex 3D extrusion and concave sunken cavities across cards, composer tracks, and modals'
+      ]
+    },
+    {
+      version: '1.0.1',
+      label: formatUpdateLabel('1.0.1'),
+      updateNumber: 0,
+      commit: '4566396',
+      title: 'Adaptive SVG Icon System & Celestial Idle Engine',
+      highlights: [
+        'Introduced recessed neomorphic vector icon pods and 25-second celestial idle optimization for battery savings'
       ]
     },
     {
       version: '1.0.0',
       label: formatUpdateLabel('1.0.0'),
       updateNumber: 0,
-      commit: '794c42b',
-      title: 'Trust & Calm Neomorphism Foundation',
+      commit: 'de9f1ff',
+      title: 'World Chat Initial Launch',
       highlights: [
-        'Midnight Harbor Dark & Serene Alabaster Light 3D neomorphic dome styling',
-        'Pre-send message beautifier, animated Noto Color Emoji reactions, and custom profile photos'
+        'Launched anonymous global live chatroom with swipe-to-send, 350-char limit, EXIF-stripped photo sharing, reply quotes, and Web Audio SoundFX'
       ]
     }
   ];
@@ -825,16 +923,17 @@
    */
   // --- Application State ---
   const state = {
-    username: localStorage.getItem('wc_username') || '',
-    color: localStorage.getItem('wc_color') || '',
-    avatarUrl: localStorage.getItem('wc_avatar_url') || '',
-    userIcon: localStorage.getItem('wc_user_icon') || '',
-    clientToken: localStorage.getItem('wc_token') || '',
-    userId: localStorage.getItem('wc_userId') || '',
-    soundEnabled: localStorage.getItem('wc_sound') !== 'false',
-    safeMode: localStorage.getItem('wc_safemode') === 'true',
+    username: safeStorageGet('wc_username') || '',
+    color: safeStorageGet('wc_color') || '',
+    avatarUrl: safeStorageGet('wc_avatar_url') || '',
+    userIcon: safeStorageGet('wc_user_icon') || '',
+    clientToken: safeStorageGet('wc_token') || '',
+    userId: safeStorageGet('wc_userId') || '',
+    soundEnabled: safeStorageGet('wc_sound') !== 'false',
+    idleNotifEnabled: safeStorageGet('wc_idle_notif') !== 'false',
+    safeMode: safeStorageGet('wc_safemode') === 'true',
     theme: (function() {
-      const saved = localStorage.getItem('worldchat_theme');
+      const saved = safeStorageGet('worldchat_theme');
       if (saved === 'neomorphism-light' || saved === 'neomorphism' || saved === 'light') {
         return 'neomorphism-light';
       }
@@ -866,14 +965,14 @@
     state.userIcon = generated.userIcon;
     state.clientToken = generated.clientToken;
     state.userId = generated.userId;
-    localStorage.setItem('wc_username', state.username);
-    localStorage.setItem('wc_color', state.color);
-    localStorage.setItem('wc_user_icon', state.userIcon);
-    localStorage.setItem('wc_token', state.clientToken);
-    localStorage.setItem('wc_userId', state.userId);
+    safeStorageSet('wc_username', state.username);
+    safeStorageSet('wc_color', state.color);
+    safeStorageSet('wc_user_icon', state.userIcon);
+    safeStorageSet('wc_token', state.clientToken);
+    safeStorageSet('wc_userId', state.userId);
   } else if (!DISTINGUISHED_USER_ICONS.includes(state.userIcon)) {
     state.userIcon = pickDefaultUserIcon(state.userId || state.username);
-    localStorage.setItem('wc_user_icon', state.userIcon);
+    safeStorageSet('wc_user_icon', state.userIcon);
   }
 
   // --- Neomorphic Volumetric Icons Registry ---
@@ -934,6 +1033,8 @@
   const editProfileBtn = document.getElementById('edit-profile-btn');
   const openWidgetsBtn = document.getElementById('open-widgets-btn');
   const toggleSoundBtn = document.getElementById('toggle-sound-btn');
+  const toggleIdleNotifBtn = document.getElementById('toggle-idle-notif-btn');
+  const idleNotifBadge = document.getElementById('idle-notif-badge');
   const toggleBlurBtn = document.getElementById('toggle-blur-btn');
   const safeModeIcon = document.getElementById('safe-mode-icon');
   const safeModeBadge = document.getElementById('safe-mode-badge');
@@ -1003,6 +1104,7 @@
   const modalPreviewName = document.getElementById('modal-preview-name');
 
   const checkUpdateBtn = document.getElementById('check-update-btn');
+  const openDiscordIframeBtn = document.getElementById('open-discord-iframe-btn');
   const dropdownVersionBadge = document.getElementById('dropdown-version-badge');
   const updateNoticeModal = document.getElementById('update-notice-modal');
   const closeUpdateNoticeBtn = document.getElementById('close-update-notice');
@@ -1011,7 +1113,23 @@
   const updateVersionBadge = document.getElementById('update-version-badge');
   const updateNoticeSubtitle = document.getElementById('update-notice-subtitle');
   const updateHighlightsList = document.getElementById('update-highlights-list');
+  const updateHistorySection = document.getElementById('update-history-section');
+  const updatePopupHistoryHint = document.getElementById('update-popup-history-hint');
   const updateHistoryList = document.getElementById('update-history-list');
+
+  const discordIframeModal = document.getElementById('discord-iframe-modal');
+  const closeDiscordIframeBtn = document.getElementById('close-discord-iframe');
+  const closeDiscordIframeOkBtn = document.getElementById('close-discord-iframe-btn');
+  const discordIframeCode = document.getElementById('discord-iframe-code');
+  const copyDiscordIframeBtn = document.getElementById('copy-discord-iframe-btn');
+
+  const idleNotifContainer = document.getElementById('idle-notif-container');
+  const idleNotifCard = document.getElementById('idle-notif-card');
+  const idleNotifAvatar = document.getElementById('idle-notif-avatar');
+  const idleNotifAuthor = document.getElementById('idle-notif-author');
+  const idleNotifText = document.getElementById('idle-notif-text');
+  const idleNotifJumpBtn = document.getElementById('idle-notif-jump-btn');
+  const idleNotifCloseBtn = document.getElementById('idle-notif-close-btn');
 
   const widgetAccentPicker = document.getElementById('widget-accent-picker');
   const widgetIncomingPicker = document.getElementById('widget-incoming-picker');
@@ -1312,6 +1430,23 @@
         safeModeBadge.className = 'dropdown-item-badge off';
       }
     }
+
+    // Idle Pop Notifications Toggle & Badge inside Dropdown
+    if (toggleIdleNotifBtn) {
+      if (state.idleNotifEnabled) {
+        toggleIdleNotifBtn.classList.add('active');
+        if (idleNotifBadge) {
+          idleNotifBadge.innerText = 'On';
+          idleNotifBadge.className = 'dropdown-item-badge on';
+        }
+      } else {
+        toggleIdleNotifBtn.classList.remove('active');
+        if (idleNotifBadge) {
+          idleNotifBadge.innerText = 'Off';
+          idleNotifBadge.className = 'dropdown-item-badge off';
+        }
+      }
+    }
   }
 
   // --- Color Widget Contrast & Styling Helpers ---
@@ -1454,7 +1589,7 @@
 
     state.theme = activeTheme;
     rootEl.setAttribute('data-theme', activeTheme);
-    localStorage.setItem('worldchat_theme', activeTheme);
+    safeStorageSet('worldchat_theme', activeTheme);
 
     if (themeBtn) {
       if (activeTheme === 'neomorphism-light') {
@@ -1558,7 +1693,7 @@
     });
   }
 
-  function openUpdateNoticeModal(release = activeReleaseInfo, isLiveUpdate = liveUpdateAvailable) {
+  function openUpdateNoticeModal(release = activeReleaseInfo, isLiveUpdate = liveUpdateAvailable, showHistory = false) {
     if (!updateNoticeModal) return;
     const info = release && release.version ? release : DEFAULT_RELEASE_INFO;
     const updateLabel = formatUpdateLabel(info.version);
@@ -1567,9 +1702,15 @@
       updateVersionBadge.innerText = updateLabel;
     }
     if (updateNoticeSubtitle) {
-      updateNoticeSubtitle.innerText = isLiveUpdate
-        ? `World Chat ${updateLabel} is live on the server. Click Update Now to load the latest version.`
-        : `Welcome to World Chat ${updateLabel}! Review the latest features and History of Changes below.`;
+      if (showHistory) {
+        updateNoticeSubtitle.innerText = isLiveUpdate
+          ? `World Chat ${updateLabel} is live on the server. Review Latest Highlights and the complete History of Changes below.`
+          : `Welcome to World Chat ${updateLabel}! Review the Latest Highlights and complete traced History of Changes below.`;
+      } else {
+        updateNoticeSubtitle.innerText = isLiveUpdate
+          ? `World Chat ${updateLabel} is live on the server. Click Update Now to load the latest highlights.`
+          : `World Chat ${updateLabel} is here! Here are the Latest Highlights — visit Settings -> App Updates for the full History of Changes.`;
+      }
     }
     if (updateHighlightsList) {
       updateHighlightsList.innerHTML = '';
@@ -1582,11 +1723,20 @@
         updateHighlightsList.appendChild(li);
       });
     }
-    renderUpdateHistoryList(info.history);
+
+    if (updateHistorySection) {
+      updateHistorySection.classList.toggle('hidden', !showHistory);
+    }
+    if (updatePopupHistoryHint) {
+      updatePopupHistoryHint.classList.toggle('hidden', Boolean(showHistory));
+    }
+    if (showHistory) {
+      renderUpdateHistoryList(info.history);
+    }
 
     if (confirmUpdateBtn) {
       confirmUpdateBtn.disabled = false;
-      confirmUpdateBtn.innerText = isLiveUpdate ? 'Update Now' : 'Apply Update';
+      confirmUpdateBtn.innerText = isLiveUpdate ? 'Update Now' : (showHistory ? 'Done' : 'Apply Update');
     }
 
     SoundFX.modalOpen();
@@ -1616,12 +1766,17 @@
       dropdownVersionBadge.className = liveUpdateAvailable ? 'dropdown-item-badge off' : 'dropdown-item-badge on';
     }
 
-    const ackVersion = localStorage.getItem('wc_ack_version') || '';
+    const ackVersion = safeStorageGet('wc_ack_version') || '';
     const isUnseenRelease = ackVersion !== String(release.version);
 
-    if (forceOpen || liveUpdateAvailable || isUnseenRelease) {
+    // Automatic popups highlight only Latest Highlights; full History of Changes is opened via Settings -> App Updates
+    if (forceOpen) {
+      if (updateNoticeModal) {
+        openUpdateNoticeModal(release, liveUpdateAvailable, true);
+      }
+    } else if (!isDiscordEmbed && (liveUpdateAvailable || isUnseenRelease)) {
       if (updateNoticeModal && updateNoticeModal.classList.contains('hidden')) {
-        openUpdateNoticeModal(release, liveUpdateAvailable);
+        openUpdateNoticeModal(release, liveUpdateAvailable, false);
       }
     }
   }
@@ -1643,8 +1798,8 @@
         profileBtn.classList.remove('active');
         profileBtn.setAttribute('aria-expanded', 'false');
       }
-      openUpdateNoticeModal(activeReleaseInfo, liveUpdateAvailable);
-      fetchServerVersion(false);
+      openUpdateNoticeModal(activeReleaseInfo, liveUpdateAvailable, true);
+      fetchServerVersion(true);
     });
   }
 
@@ -1664,7 +1819,7 @@
       const targetVersion = String((activeReleaseInfo && activeReleaseInfo.version) || CLIENT_APP_VERSION);
       confirmUpdateBtn.disabled = true;
       confirmUpdateBtn.innerText = 'Updating...';
-      localStorage.setItem('wc_ack_version', targetVersion);
+      safeStorageSet('wc_ack_version', targetVersion);
 
       if (liveUpdateAvailable) {
         setTimeout(() => {
@@ -1678,6 +1833,82 @@
           showToast(`World Chat updated to ${formatUpdateLabel(targetVersion)}!`, 'info');
         }, 320);
       }
+    });
+  }
+
+  // --- Discord iFrame Embed Generator Modal ---
+  function buildDiscordIframeSnippet() {
+    const origin = (window.location && window.location.origin && window.location.origin !== 'null')
+      ? window.location.origin
+      : 'https://your-world-chat-host.example';
+    return [
+      '<iframe',
+      `  src="${origin}/?embed=discord"`,
+      '  title="World Chat Live Embed"',
+      '  width="100%"',
+      '  height="680"',
+      '  style="border:0;border-radius:16px;overflow:hidden;max-width:960px;"',
+      '  loading="lazy"',
+      '  allow="clipboard-write; fullscreen; autoplay"',
+      '  referrerpolicy="strict-origin-when-cross-origin"',
+      '></iframe>'
+    ].join('\n');
+  }
+
+  function openDiscordIframeModal() {
+    if (!discordIframeModal) return;
+    if (discordIframeCode) {
+      discordIframeCode.value = buildDiscordIframeSnippet();
+    }
+    SoundFX.modalOpen();
+    discordIframeModal.classList.remove('hidden');
+  }
+
+  function closeDiscordIframeModal() {
+    if (!discordIframeModal || discordIframeModal.classList.contains('hidden')) return;
+    SoundFX.modalClose();
+    discordIframeModal.classList.add('hidden');
+  }
+
+  if (openDiscordIframeBtn) {
+    openDiscordIframeBtn.addEventListener('click', () => {
+      SoundFX.click();
+      if (profileDropdownMenu) profileDropdownMenu.classList.add('hidden');
+      if (profileBtn) {
+        profileBtn.classList.remove('active');
+        profileBtn.setAttribute('aria-expanded', 'false');
+      }
+      openDiscordIframeModal();
+    });
+  }
+
+  if (closeDiscordIframeBtn) closeDiscordIframeBtn.addEventListener('click', closeDiscordIframeModal);
+  if (closeDiscordIframeOkBtn) closeDiscordIframeOkBtn.addEventListener('click', closeDiscordIframeModal);
+  if (discordIframeModal) {
+    discordIframeModal.addEventListener('click', (e) => {
+      if (e.target === discordIframeModal) closeDiscordIframeModal();
+    });
+  }
+
+  if (copyDiscordIframeBtn && discordIframeCode) {
+    copyDiscordIframeBtn.addEventListener('click', async () => {
+      SoundFX.click();
+      const snippet = discordIframeCode.value || buildDiscordIframeSnippet();
+      let copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(snippet);
+          copied = true;
+        }
+      } catch (_) {}
+      if (!copied) {
+        try {
+          discordIframeCode.focus();
+          discordIframeCode.select();
+          copied = document.execCommand('copy');
+        } catch (_) {}
+      }
+      showToast(copied ? 'Discord iframe HTML copied!' : 'Select and copy the iframe HTML snippet.', copied ? 'info' : 'error');
     });
   }
 
@@ -1701,7 +1932,7 @@
       fetch(state.avatarUrl, { method: 'HEAD' }).then((res) => {
         if (!res.ok) {
           state.avatarUrl = '';
-          localStorage.setItem('wc_avatar_url', '');
+          safeStorageSet('wc_avatar_url', '');
           updateHeaderProfile();
           socket.emit('auth:guest_join', {
             username: state.username,
@@ -1739,6 +1970,138 @@
     scrollToBottom(true);
   });
 
+  /*
+   * PC & Mobile Idle Pop Notification Engine
+   * Detects tab inactivity, unfocused windows, or 20s+ idle user sessions on desktop
+   * and mobile devices, raising a floating neomorphic pop card, unread tab badge,
+   * and optional native browser notification when a new world chat message arrives.
+   */
+  const BASE_DOCUMENT_TITLE = document.title || 'World Chat — Anonymous Global Chat';
+  const IDLE_NOTIFY_THRESHOLD_MS = 20000;
+  let lastUserActivityAt = Date.now();
+  let unreadIdleCount = 0;
+  let lastIdleMessageId = null;
+  let idleNotifDismissTimer = null;
+
+  function resetIdlePresence() {
+    lastUserActivityAt = Date.now();
+    if (unreadIdleCount > 0) {
+      unreadIdleCount = 0;
+      document.title = BASE_DOCUMENT_TITLE;
+    }
+  }
+
+  function hideIdleNotifPop() {
+    if (idleNotifDismissTimer) {
+      clearTimeout(idleNotifDismissTimer);
+      idleNotifDismissTimer = null;
+    }
+    if (idleNotifContainer) {
+      idleNotifContainer.classList.add('hidden');
+    }
+  }
+
+  function isClientIdleForNotif() {
+    return document.hidden || !document.hasFocus() || (Date.now() - lastUserActivityAt >= IDLE_NOTIFY_THRESHOLD_MS);
+  }
+
+  function jumpToIdleMessage() {
+    hideIdleNotifPop();
+    resetIdlePresence();
+    if (lastIdleMessageId && messagesList) {
+      const targetEl = messagesList.querySelector(`[data-msg-id="${lastIdleMessageId}"]`);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.add('highlight-pulse');
+        setTimeout(() => targetEl.classList.remove('highlight-pulse'), 1600);
+        return;
+      }
+    }
+    scrollToBottom();
+  }
+
+  function maybeRequestBrowserNotifPermission() {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      try {
+        Notification.requestPermission().catch(() => {});
+      } catch (_) {}
+    }
+  }
+
+  function notifyIdleChatMessage(msg) {
+    if (!msg || !state.idleNotifEnabled || !isClientIdleForNotif()) return;
+
+    unreadIdleCount += 1;
+    document.title = `(${unreadIdleCount}) ${BASE_DOCUMENT_TITLE}`;
+    lastIdleMessageId = msg.id || null;
+
+    const senderName = String(msg.username || 'World Traveler');
+    const previewBody = msg.text && String(msg.text).trim()
+      ? String(msg.text).trim()
+      : (msg.imageUrl ? 'Shared a photo in World Chat' : 'Sent a new message');
+
+    if (idleNotifContainer && idleNotifAuthor && idleNotifText) {
+      if (idleNotifAvatar) {
+        renderAvatarElement(idleNotifAvatar, msg.avatarUrl, senderName, msg.color, msg.userIcon);
+      }
+      idleNotifAuthor.innerText = `${senderName} is chatting`;
+      idleNotifText.innerText = previewBody;
+      idleNotifContainer.classList.remove('hidden');
+
+      if (idleNotifDismissTimer) clearTimeout(idleNotifDismissTimer);
+      idleNotifDismissTimer = setTimeout(() => {
+        hideIdleNotifPop();
+      }, 7500);
+    }
+
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted' && (document.hidden || !document.hasFocus())) {
+      try {
+        const nativeNotif = new Notification(`World Chat • ${senderName}`, {
+          body: previewBody,
+          tag: 'world-chat-idle-pop',
+          renotify: true
+        });
+        nativeNotif.onclick = () => {
+          try { window.focus(); } catch (_) {}
+          jumpToIdleMessage();
+          nativeNotif.close();
+        };
+      } catch (_) {}
+    }
+  }
+
+  ['mousemove', 'mousedown', 'keydown', 'touchstart', 'touchmove', 'scroll'].forEach((evt) => {
+    window.addEventListener(evt, resetIdlePresence, { passive: true });
+  });
+  window.addEventListener('focus', resetIdlePresence);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      resetIdlePresence();
+    }
+  });
+
+  if (idleNotifJumpBtn) {
+    idleNotifJumpBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      SoundFX.click();
+      jumpToIdleMessage();
+    });
+  }
+  if (idleNotifCard) {
+    idleNotifCard.addEventListener('click', () => {
+      SoundFX.click();
+      jumpToIdleMessage();
+    });
+  }
+  if (idleNotifCloseBtn) {
+    idleNotifCloseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      SoundFX.click();
+      hideIdleNotifPop();
+    });
+  }
+
   socket.on('chat:broadcast', (msg) => {
     const isOwn = msg.userId === state.userId;
     appendMessage(msg, isOwn);
@@ -1746,6 +2109,10 @@
       SoundFX.moodEffect(msg.styleVariant);
     } else if (!isOwn) {
       playPopSound();
+    }
+
+    if (!isOwn) {
+      notifyIdleChatMessage(msg);
     }
 
     if (state.isNearBottom || isOwn) {
@@ -3131,7 +3498,7 @@
 
     // 2nd+ click: if user still clicked, display educational popup modal
     if (swipeClickCount >= 2) {
-      const isDismissed = localStorage.getItem('wc_dismiss_swipe_notice') === 'true';
+      const isDismissed = safeStorageGet('wc_dismiss_swipe_notice') === 'true';
       if (!isDismissed && swipeNoticeModal) {
         SoundFX.modalOpen();
         swipeNoticeModal.classList.remove('hidden');
@@ -3143,7 +3510,7 @@
   function closeSwipeNotice() {
     SoundFX.modalClose();
     if (dismissSwipeNoticeCb && dismissSwipeNoticeCb.checked) {
-      localStorage.setItem('wc_dismiss_swipe_notice', 'true');
+      safeStorageSet('wc_dismiss_swipe_notice', 'true');
     }
     if (swipeNoticeModal) {
       swipeNoticeModal.classList.add('hidden');
@@ -3169,7 +3536,7 @@
   // --- Header Toggles ---
   toggleSoundBtn.addEventListener('click', () => {
     state.soundEnabled = !state.soundEnabled;
-    localStorage.setItem('wc_sound', state.soundEnabled ? 'true' : 'false');
+    safeStorageSet('wc_sound', state.soundEnabled ? 'true' : 'false');
     updateTogglesUI();
     if (state.soundEnabled) {
       SoundFX.toggleOn(true);
@@ -3179,9 +3546,25 @@
     showToast(state.soundEnabled ? 'Sound alerts enabled' : 'Sound muted');
   });
 
+  if (toggleIdleNotifBtn) {
+    toggleIdleNotifBtn.addEventListener('click', () => {
+      state.idleNotifEnabled = !state.idleNotifEnabled;
+      safeStorageSet('wc_idle_notif', state.idleNotifEnabled ? 'true' : 'false');
+      updateTogglesUI();
+      if (state.idleNotifEnabled) {
+        SoundFX.toggleOn();
+        maybeRequestBrowserNotifPermission();
+      } else {
+        SoundFX.toggleOff();
+        hideIdleNotifPop();
+      }
+      showToast(state.idleNotifEnabled ? 'Idle pop notifications enabled' : 'Idle pop notifications paused');
+    });
+  }
+
   toggleBlurBtn.addEventListener('click', () => {
     state.safeMode = !state.safeMode;
-    localStorage.setItem('wc_safemode', state.safeMode ? 'true' : 'false');
+    safeStorageSet('wc_safemode', state.safeMode ? 'true' : 'false');
     updateTogglesUI();
     if (state.safeMode) {
       SoundFX.toggleOn();
@@ -3631,11 +4014,11 @@
     state.avatarUrl = finalAvatarUrl || '';
     state.widgetColorsByTheme = cloneWidgetMap(modalWidgetColorsByTheme);
 
-    localStorage.setItem('wc_username', state.username);
-    localStorage.setItem('wc_color', state.color);
-    localStorage.setItem('wc_user_icon', state.userIcon);
-    localStorage.setItem('wc_avatar_url', state.avatarUrl);
-    localStorage.setItem('wc_widget_colors', JSON.stringify(state.widgetColorsByTheme));
+    safeStorageSet('wc_username', state.username);
+    safeStorageSet('wc_color', state.color);
+    safeStorageSet('wc_user_icon', state.userIcon);
+    safeStorageSet('wc_avatar_url', state.avatarUrl);
+    safeStorageSet('wc_widget_colors', JSON.stringify(state.widgetColorsByTheme));
 
     updateHeaderProfile();
     applyWidgetColors(getActiveWidgetColors(state.theme), state.theme);
@@ -3686,7 +4069,8 @@
       const deleteWasOpen = deleteConfirmModal && !deleteConfirmModal.classList.contains('hidden');
       const reminderWasOpen = photoReminderModal && !photoReminderModal.classList.contains('hidden');
       const reactionUsersWasOpen = reactionUsersModal && !reactionUsersModal.classList.contains('hidden');
-      const modalOpen = !lightboxModal.classList.contains('hidden') || profileWasOpen || updateWasOpen || deleteWasOpen || reminderWasOpen || reactionUsersWasOpen;
+      const discordIframeWasOpen = discordIframeModal && !discordIframeModal.classList.contains('hidden');
+      const modalOpen = !lightboxModal.classList.contains('hidden') || profileWasOpen || updateWasOpen || deleteWasOpen || reminderWasOpen || reactionUsersWasOpen || discordIframeWasOpen;
       if (modalOpen) {
         SoundFX.modalClose();
       }
@@ -3706,6 +4090,7 @@
         }
       }
       closeAllReactionPickers();
+      hideIdleNotifPop();
       lightboxModal.classList.add('hidden');
       profileModal.classList.add('hidden');
       if (updateNoticeModal) updateNoticeModal.classList.add('hidden');
@@ -3715,6 +4100,7 @@
       }
       if (photoReminderModal) photoReminderModal.classList.add('hidden');
       if (reactionUsersModal) closeReactionUsersModal();
+      if (discordIframeModal) discordIframeModal.classList.add('hidden');
     }
   });
 })();
